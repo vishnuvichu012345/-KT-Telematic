@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  .container-fluid.mx-3.my-4
+    //- Stock View Header
+    .row.mb-4
+      .col-12
+        h1.text-center.mb-4 Stock View
+
+    //- Stock Table
+    .row
+      .col-12
+        .table-responsive
+          table.table.table-striped.table-bordered#stockTable
+            thead.bg-primary.text-white
+              tr
+                th Branch
+                th Total Assets
+                th Total Value
+            tbody
+              each stock in stocks
+                tr
+                  td= stock.branch
+                  td= stock.totalAssets
+                  td= stock.totalValue
+            tfoot
+              tr
+                th Total
+                th= stocks.reduce((sum, stock) => sum + stock.totalAssets, 0)
+                th= stocks.reduce((sum, stock) => sum + stock.totalValue, 0)
+
+  //- Scripts
+  script(src='https://code.jquery.com/jquery-3.5.1.min.js')
+  script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+  script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')
+  script.
+    $(document).ready(function() {
+      $('#stockTable').DataTable({
+        responsive: true
+      });
+    });

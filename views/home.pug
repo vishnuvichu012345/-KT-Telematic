@@ -1,0 +1,56 @@
+extends layout
+
+block content
+  .jumbotron.jumbotron-fluid.bg-info.text-white
+    .container
+      h1.display-4 Welcome to Asset Management System
+      p.lead Manage your company's assets efficiently with our comprehensive system.
+      hr.my-4
+      p Explore the features to manage employees and assets seamlessly.
+      a.btn.btn-light.btn-lg(href='/employees', role='button') Get Started
+
+  .container.mt-4
+    .row
+      .col-md-12.col-lg-4.mb-4
+        .card.text-center
+          .card-body
+            i.fas.fa-users.fa-3x.mb-3
+            h5.card-title Employee Master
+            p.card-text View and manage all employees in your company.
+            a.btn.btn-primary(href='/employees') View Employees
+
+      .col-md-12.col-lg-4.mb-4
+        .card.text-center
+          .card-body
+            i.fas.fa-boxes.fa-3x.mb-3
+            h5.card-title Asset Master
+            p.card-text Manage all assets efficiently with detailed information.
+            a.btn.btn-primary(href='/assets') View Assets
+
+      .col-md-12.col-lg-4.mb-4
+        .card.text-center
+          .card-body
+            i.fas.fa-tags.fa-3x.mb-3
+            h5.card-title Asset Categories
+            p.card-text Organize your assets by category for better tracking.
+            a.btn.btn-primary(href='/assetCategories') View Categories
+
+  .container.mt-4
+    .row
+      .col-md-12.col-lg-6.mb-4
+        .card
+          .card-body
+            h5.card-title.text-center Asset History
+            p.card-text View the complete history of each asset from purchase to scrap.
+            a.btn.btn-primary(href='/asset-history') View History
+
+      .col-md-12.col-lg-6.mb-4
+        .card
+          .card-body
+            h5.card-title.text-center Stock View
+            p.card-text Get a bird's eye view of all assets in stock and their total value.
+            a.btn.btn-primary(href='/stock-view') View Stock
+
+  script(src='https://code.jquery.com/jquery-3.5.1.min.js')
+  script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+  script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')

@@ -1,0 +1,71 @@
+/* public/styles.css */
+
+/* Change the background color of the navbar */
+.navbar {
+  background-color: #343a40 !important;
+}
+
+
+body {
+  padding-top: 56px; /* Adjust based on your navbar height */
+}
+
+/* Change the color of the navbar brand */
+.navbar-brand {
+  color: #ffffff !important;
+}
+
+/* Change the color of the navbar links */
+.nav-link {
+  color: #ffffff !important;
+}
+
+/* Add hover effect for navbar links */
+.nav-link:hover {
+  color: #f8f9fa !important;
+  background-color: #495057 !important;
+  border-radius: 4px;
+}
+
+/* Add custom styles for jumbotron */
+.jumbotron {
+  background: linear-gradient(to right, #00b4db, #0083b0); /* Gradient background */
+  color: #ffffff; /* White text */
+  padding: 4rem 1rem;
+  text-align: center; /* Center text */
+}
+
+/* Add custom button styles */
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+
+.card {
+  border: 1px solid #dee2e6; /* Light border color */
+  border-radius: 0.5rem; /* Rounded corners */
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.btn-primary {
+  background-color: #007bff; /* Primary blue color */
+  border-color: #007bff;
+}
+
+.btn-light {
+  background-color: #ffffff; /* Light button for contrast */
+  border-color: #ffffff;
+}
+
+i.fas {
+  color: #007bff; /* Icon color */
+}
