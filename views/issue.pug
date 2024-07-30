@@ -13,7 +13,7 @@ block content
         .card.bg-light.border-primary.shadow-lg
           .card-body
             h5.card-title.text-primary Issue Asset to Employee
-            form(action='/assets/issue' method='POST')
+            form(action='/assets/issue/add' method='POST')
               .row
                 .col-md-4.mb-3
                   .form-group
@@ -36,11 +36,31 @@ block content
               .form-group.mt-3
                 button.btn.btn-primary.btn-lg(type='submit') Issue Asset
 
+    //- Issued Assets Table
+    .row.mt-4
+      .col-md-12
+        .card.bg-light.border-primary.shadow-lg
+          .card-body
+            h5.card-title.text-primary Issued Assets
+            .table-responsive
+              table.table.table-striped.table-bordered#issuedAssetsTable
+                thead.bg-primary.text-white
+                  tr
+                    th Asset
+                    th Employee
+                    th Issue Date
+                tbody
+                  each issue in issues
+                    tr
+                      td= issue.Asset ? `${issue.Asset.model} - ${issue.Asset.uniqueId}` : 'N/A'
+                      td= issue.Employee ? `${issue.Employee.employeeId} - ${issue.Employee.name}` : 'N/A'
+                      td= issue.issueDate ? new Date(issue.issueDate).toLocaleDateString() : 'N/A'
+
   //- Scripts
   script(src='https://code.jquery.com/jquery-3.5.1.min.js')
   script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
   script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')
   script.
     $(document).ready(function() {
-      // Initialize form elements or add additional JavaScript if needed
+      $('#issuedAssetsTable').DataTable();
     });
