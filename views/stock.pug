@@ -19,7 +19,7 @@ block content
                 th Total Value
             tbody
               each stock in stocks
-                tr
+                tr(data-branch=stock.branch)
                   td= stock.branch
                   td= stock.totalAssets
                   td= stock.totalValue
@@ -29,13 +29,63 @@ block content
                 th= stocks.reduce((sum, stock) => sum + stock.totalAssets, 0)
                 th= stocks.reduce((sum, stock) => sum + stock.totalValue, 0)
 
+    //- Details Table
+    .row.mt-4
+      .col-12
+        .table-responsive
+          table.table.table-striped.table-bordered#assetDetailsTable
+            thead.bg-primary.text-white
+              tr
+                th Serial Number
+                th Unique ID
+                th Make
+                th Model
+                th Status
+                th Location
+                th Purchase Date
+                th Cost
+            tbody
+              // This tbody will be populated by DataTables when data is fetched
+
   //- Scripts
   script(src='https://code.jquery.com/jquery-3.5.1.min.js')
   script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
   script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')
   script.
     $(document).ready(function() {
-      $('#stockTable').DataTable({
+      var stockTable = $('#stockTable').DataTable({
         responsive: true
+      });
+
+      var assetDetailsTable = $('#assetDetailsTable').DataTable({
+        responsive: true,
+        columns: [
+          { data: 'serialNumber' },
+          { data: 'uniqueId' },
+          { data: 'make' },
+          { data: 'model' },
+          { data: 'status' },
+          { data: 'location' },
+          { data: 'purchaseDate' },
+          { data: 'cost' }
+        ]
+      });
+
+      $('#stockTable tbody').on('click', 'tr', function() {
+        var branch = $(this).data('branch');
+        if (branch) {
+          $.ajax({
+            url: '/assets/stock/details',
+            method: 'POST',
+            data: { branch: branch },
+            success: function(data) {
+              assetDetailsTable.clear().rows.add(data).draw();
+            },
+            error: function() {
+              console.error('AJAX Error:', status, error);
+              alert('Error fetching asset details');
+            }
+          });
+        }
       });
     });

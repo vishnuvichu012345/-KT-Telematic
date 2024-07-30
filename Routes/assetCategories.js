@@ -10,10 +10,24 @@ router.get('/', async (req, res) => {
 
 // Add a new asset category
 router.post('/add', async (req, res) => {
-    await AssetCategory.create(req.body);
+    console.log("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",req.body); // Log the request body
+    const { name, description } = req.body;
+    await AssetCategory.create({ name, description });
     res.redirect('/assetCategories');
 });
 
-// Other routes for edit, view, etc.
+router.post('/edit/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+    await AssetCategory.update({ name, description }, { where: { id } });
+    res.redirect('/assetCategories');
+});
+
+// Delete an asset category
+router.get('/delete/:id', async (req, res) => {
+    const { id } = req.params;
+    await AssetCategory.destroy({ where: { id } });
+    res.redirect('/assetCategories');
+});
 
 module.exports = router;
