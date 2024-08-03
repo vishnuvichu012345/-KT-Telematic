@@ -1,23 +1,53 @@
-// routes/scrapasset.js
 const express = require('express');
 const router = express.Router();
-const { Asset, ScrapAsset } = require('../models');
+const { Asset, ScrapAsset,Issue } = require('../models');
 
+// GET request to render the Scrap Asset page
 // GET request to render the Scrap Asset page
 router.get('/', async (req, res) => {
   try {
-    const assets = await Asset.findAll({attributes: ['id', 'model', 'uniqueId'] });
+    // Fetch all assets
+    const assets = await Asset.findAll();
+
+    // Fetch all issued assets
+    const issuedAssets = await Issue.findAll({
+      attributes: ['assetId'],
+      raw: true
+    });
+
+    // Fetch all scrapped assets
+    const scrappedAssets = await ScrapAsset.findAll({
+      attributes: ['assetId'],
+      raw: true
+    });
+
+    // Get asset IDs that are issued or scrapped
+    const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
+    const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
+
+    // Filter out issued and scrapped assets
+    const availableAssets = assets.filter(asset => 
+      !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
+    );
+
+    // Fetch all scraps to display in the table, including associated Asset data
     const scraps = await ScrapAsset.findAll({
       attributes: ['id', 'assetId', 'scrapDate', 'scrapReason'],
       include: [{ model: Asset, attributes: ['model', 'uniqueId'] }]
     });
 
-    res.render('scrap', { assets, scraps });
+    // Log data for debugging
+    console.log('Available Assets:', availableAssets);
+    console.log('Scraps Data:', scraps);
+
+    res.render('scrap', { assets: availableAssets, scraps });
   } catch (error) {
     console.error('Error loading data:', error);
     res.status(500).send('Error loading data');
   }
 });
+
+
 
 // POST request to add a new scrap
 router.post('/add', async (req, res) => {

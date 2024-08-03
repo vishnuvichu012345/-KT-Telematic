@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Asset, AssetCategory, Issue, Employee,ReturnAsset  } = require('../models');
+const { Asset, AssetCategory, Issue, Employee,Returndata,ScrapAsset  } = require('../models');
 
 // Add/Edit/View Assets
 router.get('/', async (req, res) => {
@@ -74,26 +74,29 @@ router.get('/delete/:id', async (req, res) => {
 
 router.get('/stock', async (req, res) => {
   try {
-    // Fetch all assets
     console.log("Fetching all assets...");
     const assets = await Asset.findAll();
     console.log("Fetched assets:", assets);
 
-    // Fetch all issued assets
     const issuedAssets = await Issue.findAll({
       attributes: ['assetId'],
       raw: true
     });
 
-    // Get asset IDs that are issued
+    const scrappedAssets = await ScrapAsset.findAll({
+      attributes: ['assetId'],
+      raw: true
+    });
+
     const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
+    const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
 
-    // Filter out issued assets
-    const stock = assets.filter(asset => !issuedAssetIds.includes(asset.id));
+    const stock = assets.filter(asset => 
+      !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
+    );
 
-    // Compute stock totals for each branch
     const stockByBranch = stock.reduce((acc, asset) => {
-      const branch = asset.location; // Ensure 'location' corresponds to the branch field
+      const branch = asset.location; 
       if (!acc[branch]) {
         acc[branch] = { totalAssets: 0, totalValue: 0 };
       }
@@ -102,7 +105,6 @@ router.get('/stock', async (req, res) => {
       return acc;
     }, {});
 
-    // Convert the aggregated stock data to an array
     const stocks = Object.keys(stockByBranch).map(branch => ({
       branch,
       totalAssets: stockByBranch[branch].totalAssets,
@@ -116,29 +118,30 @@ router.get('/stock', async (req, res) => {
   }
 });
 
-
-
 router.post('/stock/details', async (req, res) => {
   const { branch } = req.body;
   try {
-    // Fetch all assets for the selected branch
     const assetsInBranch = await Asset.findAll({
       where: { location: branch }
     });
 
-    // Fetch all issued assets for the selected branch
     const issuedAssets = await Issue.findAll({
       include: [{ model: Asset, attributes: ['id', 'location'] }],
       where: { '$Asset.location$': branch }
     });
 
-    // Get asset IDs that are issued
+    const scrappedAssets = await ScrapAsset.findAll({
+      attributes: ['assetId'],
+      raw: true
+    });
+
     const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
+    const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
 
-    // Filter out issued assets
-    const availableAssets = assetsInBranch.filter(asset => !issuedAssetIds.includes(asset.id));
+    const availableAssets = assetsInBranch.filter(asset => 
+      !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
+    );
 
-    // Convert the available assets to a format suitable for DataTables
     const assetDetails = availableAssets.map(asset => ({
       serialNumber: asset.serialNumber,
       uniqueId: asset.uniqueId,
@@ -159,36 +162,62 @@ router.post('/stock/details', async (req, res) => {
 
 
 
-
 // Fetch all required data and render the issue page
 router.get('/issue', async (req, res) => {
   try {
-    const assets = await Asset.findAll({ attributes: ['id', 'model', 'uniqueId'] });
-    const issuedAssets = await Issue.findAll({ attributes: ['assetId'], raw: true });
-    const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
-    const availableAssets = assets.filter(asset => !issuedAssetIds.includes(asset.id));
-    const employees = await Employee.findAll({ attributes: ['id', 'employeeId', 'name'] });
+    // Fetch all assets
+    const assets = await Asset.findAll();
+    console.log('All Assets:', assets.map(asset => asset.toJSON())); // Log all assets in a readable format
+
+    // Fetch all employees
+    const employees = await Employee.findAll({
+      attributes: ['id', 'employeeId', 'name']
+    });
+    console.log('Employees:', employees.map(employee => employee.toJSON())); // Log employees
+
+    // Fetch all issues with associated assets and employees
     const issues = await Issue.findAll({
-      attributes: ['id', 'assetId', 'employeeId', 'issueDate'],
       include: [
-        { model: Asset, attributes: ['model', 'uniqueId'] },
-        { model: Employee, attributes: ['employeeId', 'name'] }
+        { model: Asset },
+        { model: Employee }
       ]
     });
+    console.log('Issues:', issues.map(issue => issue.toJSON())); // Log issues
 
-    res.render('issue', { assets: availableAssets, employees, issues });
+    res.render('issue', { assets, employees, issues });
   } catch (error) {
-    console.error('Error loading data:', error);
-    res.status(500).send('Error loading data');
+    console.error('Error fetching data:', error);
+    res.status(500).send('Error fetching data');
   }
 });
 
-// Add a new issue
+
+
+
 router.post('/issue/add', async (req, res) => {
-  const { assetId, employeeId, issueDate } = req.body;
+  let { assetId, employeeId, issueDate } = req.body;
+  
+  // Ensure issueDate is a single date string
+  if (Array.isArray(issueDate)) {
+    issueDate = issueDate[0]; // Assuming you want the first date in the array
+  }
+  
+  // Sanitize and validate assetId and employeeId
+  assetId = parseInt(assetId, 10);
+  employeeId = parseInt(employeeId, 10);
+  
+  if (isNaN(assetId) || isNaN(employeeId)) {
+    return res.status(400).send('Invalid assetId or employeeId');
+  }
+  
   try {
-    await Issue.create({ assetId, employeeId, issueDate });
+    const sanitizedIssueDate = new Date(issueDate).toISOString(); // Ensure proper date format
+    
+    // Create issue record
+    await Issue.create({ assetId, employeeId, issueDate: sanitizedIssueDate });
+    // Update asset status
     await Asset.update({ status: 'Issued' }, { where: { id: assetId } });
+    
     res.redirect('/assets/issue');
   } catch (error) {
     console.error('Error issuing asset:', error);
@@ -196,14 +225,15 @@ router.post('/issue/add', async (req, res) => {
   }
 });
 
+
+
 // Delete an issue
 router.delete('/issue/delete/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const issue = await Issue.findByPk(id);
     if (issue) {
-      await issue.destroy();
-      await Asset.update({ status: 'Available' }, { where: { id: issue.assetId } });
+      await issue.destroy({ where: { id: issue.assetId } });
       res.sendStatus(200);
     } else {
       res.status(404).send('Issue not found');
@@ -211,29 +241,6 @@ router.delete('/issue/delete/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting issue:', error);
     res.status(500).send('Error deleting issue');
-  }
-});
-
-// Render the edit issue page
-router.get('/issue/edit/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const issue = await Issue.findByPk(id, {
-      include: [
-        { model: Asset, attributes: ['model', 'uniqueId'] },
-        { model: Employee, attributes: ['employeeId', 'name'] }
-      ]
-    });
-    if (issue) {
-      const assets = await Asset.findAll({ attributes: ['id', 'model', 'uniqueId'] });
-      const employees = await Employee.findAll({ attributes: ['id', 'employeeId', 'name'] });
-      res.render('editIssue', { issue, assets, employees });
-    } else {
-      res.status(404).send('Issue not found');
-    }
-  } catch (error) {
-    console.error('Error loading edit page:', error);
-    res.status(500).send('Error loading edit page');
   }
 });
 
@@ -254,119 +261,133 @@ router.post('/issue/edit/:id', async (req, res) => {
   }
 });
 
-// GET request to render the Return Asset page
-router.get('/returndata', async (req, res) => {
+
+// router.get('/return', async (req, res) => {
+//   try {
+//     // Fetch assets that are issued
+//     const issuedAssets = await Asset.findAll({
+//       include: [{
+//         model: Issue, // Assuming the model for issued assets is called 'Issue'
+//         attributes: []
+//       }]
+//     });
+
+//     // Fetch all employees
+//     const employees = await Employee.findAll({
+//       attributes: ['id', 'employeeId', 'name']
+//     });
+
+//     // Fetch all returns with associated assets and employees
+//     const returns = await Returndata.findAll({
+//       attributes: ['id', 'assetId', 'employeeId', 'returnDate', 'returnReason'],
+//       include: [
+//         { model: Asset, attributes: ['model', 'uniqueId'] },
+//         { model: Employee, attributes: ['employeeId', 'name'] }
+//       ]
+//     });
+
+//     res.render('returna', { assets: issuedAssets, employees, returns });
+//   } catch (error) {
+//     console.error('Error loading data:', error);
+//     res.status(500).send('Error loading data');
+//   }
+// });
+
+
+
+
+router.get('/return', async (req, res) => {
   try {
-    // Fetch all issued records
-    const issuedRecords = await Issue.findAll({
-      attributes: ['assetId', 'employeeId'],
-      include: [
-        { model: Asset, attributes: ['id', 'model', 'uniqueId'] },
-        { model: Employee, attributes: ['id', 'employeeId', 'name'] }
-      ]
-    });
-
-    // Extract unique assets and employees from issued records
-    const issuedAssets = issuedRecords.map(record => record.Asset);
-    const issuedEmployees = issuedRecords.map(record => record.Employee);
-
-    // Fetch returned records for displaying in the table
-    const returns = await ReturnAsset.findAll({
-      attributes: ['assetId', 'employeeId', 'returnDate', 'returnReason'],
-      include: [
-        { model: Asset, attributes: ['model', 'uniqueId'] },
-        { model: Employee, attributes: ['employeeId', 'name'] }
-      ]
-    });
-
-    res.render('returna', { assets: issuedAssets, employees: issuedEmployees, returns });
-  } catch (error) {
-    console.error('Error loading data:', error);
-    res.status(500).send('Error loading data');
-  }
-});
-
-
-// POST request to add a new return
-router.post('/returndata/add', async (req, res) => {
-  const { assetId, employeeId, returnDate, returnReason } = req.body;
-  try {
-    // Create a new return record
-    await ReturnAsset.create({ assetId, employeeId, returnDate, returnReason });
-    
-    // Update the status of the asset to 'Available'
-    await Asset.update({ status: 'Available' }, { where: { id: assetId } });
-    
-    res.redirect('/assets/returndata');
-  } catch (error) {
-    console.error('Error processing return:', error);
-    res.status(500).send('Error processing return');
-  }
-});
-
-
-// DELETE request to remove a return record
-router.delete('/returndata/:id/delete', async (req, res) => {
-  try {
-    const returnId = req.params.id;
-    
-    // Delete the return record
-    await ReturnAsset.destroy({ where: { id: returnId } });
-    
-    // Redirect back to the return asset page
-    res.redirect('/assets/returndata');
-  } catch (error) {
-    console.error('Error deleting return record:', error);
-    res.status(500).send('Error deleting return record');
-  }
-});
-
-
-// GET request to render the edit form for a return record
-router.get('/returndata/:id/edit', async (req, res) => {
-  try {
-    const returnId = req.params.id;
-
-    // Fetch the return record by ID
-    const returnRecord = await ReturnAsset.findByPk(returnId, {
-      include: [
-        { model: Asset, attributes: ['id', 'model', 'uniqueId'] },
-        { model: Employee, attributes: ['id', 'employeeId', 'name'] }
-      ]
-    });
-
-    if (!returnRecord) {
-      return res.status(404).send('Return record not found');
-    }
-
-    // Fetch all assets and employees for the form dropdowns
+    // Fetch all assets
     const assets = await Asset.findAll();
+    console.log('All Assets:', assets.map(asset => asset.toJSON())); // Log all assets in a readable format
+
+    // Fetch all employees
     const employees = await Employee.findAll();
+    console.log('Employees:', employees.map(employee => employee.toJSON())); // Log employees
 
-    res.render('editReturn', { returnRecord, assets, employees });
-  } catch (error) {
-    console.error('Error loading return record for editing:', error);
-    res.status(500).send('Error loading return record for editing');
-  }
-});
-
-// POST request to update a return record
-router.post('/returndata/:id/edit', async (req, res) => {
-  const returnId = req.params.id;
-  const { assetId, employeeId, returnDate, returnReason } = req.body;
-  
-  try {
-    // Update the return record
-    await ReturnAsset.update({ assetId, employeeId, returnDate, returnReason }, {
-      where: { id: returnId }
+    // Fetch all issues with associated assets and employees
+    const issues = await Issue.findAll({
+      include: [
+        { model: Asset },
+        { model: Employee }
+      ]
     });
-    
-    res.redirect('/assets/returndata');
+    console.log('Issues:', issues.map(issue => issue.toJSON())); // Log issues
+
+    // Extract asset IDs from issues
+    const issuedAssetIds = issues.map(issue => issue.assetId);
+
+    // Filter assets to include only those that are issued
+    const issuedAssets = assets.filter(asset => issuedAssetIds.includes(asset.id));
+    console.log('Issued Assets:', issuedAssets.map(asset => asset.toJSON())); // Log issued assets
+
+    // Fetch all returns
+    const returns = await Returndata.findAll({
+      include: [
+        { model: Asset },
+        { model: Employee }
+      ]
+    });
+
+    res.render('returna', { assets: issuedAssets, employees, returns });
   } catch (error) {
-    console.error('Error updating return record:', error);
-    res.status(500).send('Error updating return record');
+    console.error('Error fetching data:', error);
+    res.status(500).send('Error fetching data');
   }
 });
 
+
+
+
+// Add a new return
+router.post('/return/add', async (req, res) => {
+  const { assetId, employeeId, returnDate, returnReason } = req.body;
+  try {
+    await Returndata.create({ assetId, employeeId, returnDate, returnReason });
+    await Asset.update({ status: 'Available' }, { where: { id: assetId } });
+    res.redirect('/assets/return');
+  } catch (error) {
+    console.error('Error returning asset:', error);
+    res.status(500).send('Error returning asset');
+  }
+});
+
+// Delete a return
+router.delete('/return/delete/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const returnRecord = await Returndata.findByPk(id);
+    if (returnRecord) {
+      await returnRecord.destroy();
+      await Asset.update({ status: 'Issued' }, { where: { id: returnRecord.assetId } });
+      res.sendStatus(200);
+    } else {
+      res.status(404).send('Returndata not found');
+    }
+  } catch (error) {
+    console.error('Error deleting return:', error);
+    res.status(500).send('Error deleting return');
+  }
+});
+
+
+// Update a return
+router.post('/return/edit/:id', async (req, res) => {
+  const { id } = req.params;
+  const { assetId, employeeId, returnDate, returnReason } = req.body;
+  try {
+    const returnRecord = await Returndata.findByPk(id);
+    if (returnRecord) {
+      await returnRecord.update({ assetId, employeeId, returnDate, returnReason });
+      res.redirect('/assets/return');
+    } else {
+      res.status(404).send('Return not found');
+    }
+  } catch (error) {
+    console.error('Error updating return:', error);
+    res.status(500).send('Error updating return');
+  }
+});
 
 module.exports = router;
