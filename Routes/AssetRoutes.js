@@ -304,4 +304,69 @@ router.post('/returndata/add', async (req, res) => {
   }
 });
 
+
+// DELETE request to remove a return record
+router.delete('/returndata/:id/delete', async (req, res) => {
+  try {
+    const returnId = req.params.id;
+    
+    // Delete the return record
+    await ReturnAsset.destroy({ where: { id: returnId } });
+    
+    // Redirect back to the return asset page
+    res.redirect('/assets/returndata');
+  } catch (error) {
+    console.error('Error deleting return record:', error);
+    res.status(500).send('Error deleting return record');
+  }
+});
+
+
+// GET request to render the edit form for a return record
+router.get('/returndata/:id/edit', async (req, res) => {
+  try {
+    const returnId = req.params.id;
+
+    // Fetch the return record by ID
+    const returnRecord = await ReturnAsset.findByPk(returnId, {
+      include: [
+        { model: Asset, attributes: ['id', 'model', 'uniqueId'] },
+        { model: Employee, attributes: ['id', 'employeeId', 'name'] }
+      ]
+    });
+
+    if (!returnRecord) {
+      return res.status(404).send('Return record not found');
+    }
+
+    // Fetch all assets and employees for the form dropdowns
+    const assets = await Asset.findAll();
+    const employees = await Employee.findAll();
+
+    res.render('editReturn', { returnRecord, assets, employees });
+  } catch (error) {
+    console.error('Error loading return record for editing:', error);
+    res.status(500).send('Error loading return record for editing');
+  }
+});
+
+// POST request to update a return record
+router.post('/returndata/:id/edit', async (req, res) => {
+  const returnId = req.params.id;
+  const { assetId, employeeId, returnDate, returnReason } = req.body;
+  
+  try {
+    // Update the return record
+    await ReturnAsset.update({ assetId, employeeId, returnDate, returnReason }, {
+      where: { id: returnId }
+    });
+    
+    res.redirect('/assets/returndata');
+  } catch (error) {
+    console.error('Error updating return record:', error);
+    res.status(500).send('Error updating return record');
+  }
+});
+
+
 module.exports = router;

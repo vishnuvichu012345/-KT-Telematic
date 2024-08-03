@@ -18,6 +18,9 @@ const home = require('./Routes/homes');
 const employeeRoutes = require('./Routes/EmployeeRoutes');
 const assetRoutes = require('./Routes/AssetRoutes');
 const assetCategoryRoutes = require('./Routes/assetCategories');
+const scrapAssetRouter = require('./Routes/scrapasset');
+// const assetHistoryRouter = require('./Routes/assetHistory');
+
 
 
 
@@ -26,6 +29,9 @@ const assetCategoryRoutes = require('./Routes/assetCategories');
 app.use('/employees', employeeRoutes);
 app.use('/assets', assetRoutes);
 app.use('/assetCategories', assetCategoryRoutes);
+app.use('/assets/scrap', scrapAssetRouter);
+// app.use('/assets/history', assetHistoryRouter);
+
 app.use('/', home);
 // app.use('/stock', stockRouter);
 
