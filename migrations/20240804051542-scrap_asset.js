@@ -9,33 +9,31 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      asset_id: {
+      asset_id: { // Column name in the database with underscore
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Assets',
-          key: 'id'
+          model: 'Assets', // Table name
+          key: 'id' // Column name in Assets table
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      scrap_date: {
+      scrap_date: { // Column name in the database with underscore
         type: Sequelize.DATE,
         allowNull: false
       },
-      scrap_reason: {
+      scrap_reason: { // Column name in the database with underscore
         type: Sequelize.STRING,
         allowNull: false
       },
       created_at: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.fn('now')
+        type: Sequelize.DATE
       },
       updated_at: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.fn('now')
+        type: Sequelize.DATE
       }
     });
   },

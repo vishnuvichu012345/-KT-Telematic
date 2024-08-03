@@ -8,8 +8,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'assetCategoryId',
         as: 'category'
       });
+      // Asset.belongsTo(models.Employee, { foreignKey: 'employeeId' });
       Asset.hasMany(models.Issue, { foreignKey: 'assetId' });
       Asset.hasMany(models.Returndata, { foreignKey: 'assetId' });
+      Asset.hasMany(models.ScrapAsset, { foreignKey: 'assetId' });
     }
   }
 
