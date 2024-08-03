@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         as: 'category'
       });
       Asset.hasMany(models.Issue, { foreignKey: 'assetId' });
+      Asset.hasMany(models.Returndata, { foreignKey: 'assetId' });
     }
   }
 

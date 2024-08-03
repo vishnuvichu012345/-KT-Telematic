@@ -2,14 +2,14 @@
 const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  class ReturnAsset extends Model {
+  class Returndata extends Model {
     static associate(models) {
-      ReturnAsset.belongsTo(models.Asset, { foreignKey: 'assetId' });
-      ReturnAsset.belongsTo(models.Employee, { foreignKey: 'employeeId' });
+      Returndata.belongsTo(models.Asset, { foreignKey: 'assetId' });
+      Returndata.belongsTo(models.Employee, { foreignKey: 'employeeId' });
     }
   }
 
-  ReturnAsset.init({
+  Returndata.init({
     assetId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -44,11 +44,11 @@ module.exports = (sequelize) => {
     }
   }, {
     sequelize,
-    modelName: 'ReturnAsset',
+    modelName: 'Returndata',
     tableName: 'ReturnAssets',
     underscored: true,
     timestamps: true
   });
 
-  return ReturnAsset;
+  return Returndata;
 };
