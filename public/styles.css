@@ -50,6 +50,7 @@ body {
 .card {
   border: 1px solid #dee2e6; /* Light border color */
   border-radius: 0.5rem; /* Rounded corners */
+  margin-right: 50px;
 }
 
 .card-body {
