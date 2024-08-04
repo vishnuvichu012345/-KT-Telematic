@@ -2,7 +2,7 @@
   "development": {
     "username": "postgres",
     "password": "Vishnu",
-    "database": "asset_management",
+    "database": "asset_management_data",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },

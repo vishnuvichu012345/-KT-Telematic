@@ -1,0 +1,96 @@
+extends layout
+
+block content
+  .container-fluid.mx-4.my-4
+    //- Asset History Header
+    .row.mb-4
+      .col-12
+        h1.text-center.mb-4 Asset History
+
+    //- Filter Form
+    .row.mb-4
+      .col-md-12
+        .card.bg-light.border-primary.shadow-lg
+          .card-body
+            h5.card-title.text-primary Filter Assets
+            .form-group
+              label(for='assetFilter') Filter by Asset Name
+              select.form-control#assetFilter
+                option(value='') Select Asset
+                each asset in assets
+                  option(value=asset.id)= `${asset.make} - ${asset.model}`
+
+    //- Asset History Table
+    .row.mt-4
+      .col-md-12
+        .card.bg-light.border-primary.shadow-lg
+          .card-body
+            h5.card-title.text-primary Asset History
+            .table-responsive
+              table.table.table-striped.table-bordered#assetHistoryTable
+                thead.bg-primary.text-white
+                  tr
+                    th Asset ID
+                    th Asset Make
+                    th Asset Model
+                    th Employee Name
+                    th Location
+                    th Purchase Date
+                    th Cost
+                    th Issue Date
+                    th Return Date
+                    th Scrap Date
+                    th Status
+                tbody#assetHistoryBody
+                  // DataTable will populate this
+
+  //- Scripts
+  script(src='https://code.jquery.com/jquery-3.5.1.min.js')
+  script(src='https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js')
+  script(src='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css')
+  script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js')
+  script.
+    $(document).ready(function() {
+      var assetHistoryTable = $('#assetHistoryTable').DataTable({
+        "data": [],
+        "columns": [
+          { "data": "id" },
+          { "data": "make" },
+          { "data": "model" },
+          { "data": "employeeName" },
+          { "data": "location" },
+          { "data": "purchaseDate" },
+          { "data": "cost" },
+          { "data": "issueDate" },
+          { "data": "returnDate" },
+          { "data": "scrapDate" },
+          { "data": "status" }
+        ]
+      });
+
+      $('#assetFilter').change(function() {
+        var assetId = $(this).val();
+        if (assetId) {
+          $.get('/assets/history/' + assetId, function(data) {
+            var asset = data.asset;
+            var row = {
+              id: asset.id,
+              make: asset.make,
+              model: asset.model,
+              employeeName: asset.Issues.length > 0 ? (asset.Issues[0].Employee ? asset.Issues[0].Employee.name : 'N/A') : 'N/A',
+              location: asset.location,
+              purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toDateString() : 'N/A',
+              cost: asset.cost ? `$${asset.cost}` : 'N/A',
+              issueDate: asset.Issues.length > 0 ? (asset.Issues[0].issueDate ? new Date(asset.Issues[0].issueDate).toDateString() : 'N/A') : 'N/A',
+              returnDate: asset.Returndata.length > 0 ? (asset.Returndata[0].returnDate ? new Date(asset.Returndata[0].returnDate).toDateString() : 'N/A') : 'N/A',
+              scrapDate: asset.ScrapAssets.length > 0 ? (asset.ScrapAssets[0].scrapDate ? new Date(asset.ScrapAssets[0].scrapDate).toDateString() : 'N/A') : 'N/A',
+              status: asset.ScrapAssets.length > 0 ? 'Scrapped' :
+                      asset.Returndata.length > 0 ? 'Returned' :
+                      asset.Issues.length > 0 ? 'Issued' : 'Available'
+            };
+
+            assetHistoryTable.clear().rows.add([row]).draw();
+          });
+        }
+      });
+    });

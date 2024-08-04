@@ -2,55 +2,47 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('ReturnAssets', {
+    await queryInterface.createTable('Issues', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      asset_id: {
+      assetId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Assets',
+          model: 'Assets', // Referencing the Assets table
           key: 'id'
         },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+        onDelete: 'CASCADE' // Optional: delete issues if the related asset is deleted
       },
-      employee_id: {
+      employeeId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Employees',
+          model: 'Employees', // Referencing the Employees table
           key: 'id'
         },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+        onDelete: 'CASCADE' // Optional: delete issues if the related employee is deleted
       },
-      return_date: {
+      issueDate: {
         type: Sequelize.DATE,
         allowNull: false
       },
-      return_reason: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      created_at: {
+      createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        type: Sequelize.DATE
       },
-      updated_at: {
+      updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        type: Sequelize.DATE
       }
     });
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('ReturnAssets');
+    await queryInterface.dropTable('Issues');
   }
 };

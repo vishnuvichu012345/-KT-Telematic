@@ -262,37 +262,6 @@ router.post('/issue/edit/:id', async (req, res) => {
 });
 
 
-// router.get('/return', async (req, res) => {
-//   try {
-//     // Fetch assets that are issued
-//     const issuedAssets = await Asset.findAll({
-//       include: [{
-//         model: Issue, // Assuming the model for issued assets is called 'Issue'
-//         attributes: []
-//       }]
-//     });
-
-//     // Fetch all employees
-//     const employees = await Employee.findAll({
-//       attributes: ['id', 'employeeId', 'name']
-//     });
-
-//     // Fetch all returns with associated assets and employees
-//     const returns = await Returndata.findAll({
-//       attributes: ['id', 'assetId', 'employeeId', 'returnDate', 'returnReason'],
-//       include: [
-//         { model: Asset, attributes: ['model', 'uniqueId'] },
-//         { model: Employee, attributes: ['employeeId', 'name'] }
-//       ]
-//     });
-
-//     res.render('returna', { assets: issuedAssets, employees, returns });
-//   } catch (error) {
-//     console.error('Error loading data:', error);
-//     res.status(500).send('Error loading data');
-//   }
-// });
-
 
 
 
@@ -389,5 +358,52 @@ router.post('/return/edit/:id', async (req, res) => {
     res.status(500).send('Error updating return');
   }
 });
+
+
+router.get('/history', async (req, res) => {
+  try {
+    const assets = await Asset.findAll({
+      include: [
+        { model: Issue, include: [Employee] },
+        { model: Returndata },
+        { model: ScrapAsset },
+      ],
+    });
+
+    // Log the assets with detailed structure
+    console.log("===========================================================");
+    assets.forEach(asset => {
+      console.log("Asset ID:", asset.id);
+      console.log("Issues:", JSON.stringify(asset.Issues, null, 2));
+      console.log("Returndata:", JSON.stringify(asset.Returndata, null, 2));
+      console.log("ScrapAssets:", JSON.stringify(asset.ScrapAssets, null, 2));
+    });
+
+    res.render('assetHistory', { assets });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// Route to get history for a specific asset
+router.get('/history/:id', async (req, res) => {
+  try {
+    const asset = await Asset.findOne({
+      where: { id: req.params.id },
+      include: [
+        {
+          model: Issue,
+          include: [Employee] // Ensure issues include the Employee data
+        },
+        Returndata,
+        ScrapAsset,
+      ],
+    });
+    res.json({ asset });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
 
 module.exports = router;

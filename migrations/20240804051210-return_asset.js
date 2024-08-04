@@ -2,50 +2,48 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('ReturnAssets', {
+    await queryInterface.createTable('ReturnAssets', { // Table name
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      asset_id: {
+      asset_id: { // Column name in the database with underscore
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Assets',
-          key: 'id'
+          model: 'Assets', // Table name
+          key: 'id' // Column name in Assets table
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      employee_id: {
+      employee_id: { // Column name in the database with underscore
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Employees',
-          key: 'id'
+          model: 'Employees', // Table name
+          key: 'id' // Column name in Employees table
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
-      return_date: {
+      return_date: { // Column name in the database with underscore
         type: Sequelize.DATE,
         allowNull: false
       },
-      return_reason: {
+      return_reason: { // Column name in the database with underscore
         type: Sequelize.STRING,
         allowNull: false
       },
       created_at: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        type: Sequelize.DATE
       },
       updated_at: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        type: Sequelize.DATE
       }
     });
   },

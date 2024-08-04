@@ -6,6 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Employee.hasMany(models.Issue, { foreignKey: 'employeeId' });
       Employee.hasMany(models.Returndata, { foreignKey: 'employeeId' });
+      // Employee.hasMany(models.Asset, {foreignKey: 'employeeId' });
+
     }
   }
 
