@@ -72,6 +72,7 @@ router.get('/delete/:id', async (req, res) => {
   }
 });
 
+
 router.get('/stock', async (req, res) => {
   try {
     console.log("Fetching all assets...");
@@ -182,6 +183,7 @@ router.get('/issue', async (req, res) => {
         { model: Employee }
       ]
     });
+    
     console.log('Issues:', issues.map(issue => issue.toJSON())); // Log issues
 
     res.render('issue', { assets, employees, issues });

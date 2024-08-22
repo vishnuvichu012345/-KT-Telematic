@@ -1,155 +1,223 @@
 extends layout
-
+block styles
+  link(rel='stylesheet', href='custom-styles.css')
 block content
-  .container-fluid.mx-3.my-4
-    //- Employee List Header
-    .row.mb-4
-      .col-12
-        h1.text-center.mb-4 Employee List
+  .container-fluid.my-4
+    //- Card Container
+    .card.shadow-lg
+      .card-header.bg-primary.text-white.text-center
+        h2.mb-0 Employee Management
 
-    //- Form to Add Employee
-    .row.mb-4
-      .col-md-12
-        .card.bg-light.border-primary.shadow-lg
-          .card-body
-            h5.card-title.text-primary Add New Employee
-            form(action='/employees/add' method='POST')
-              .row
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='employeeId') Employee ID
-                    input.form-control(type='text' id='employeeId' name='employeeId' placeholder='Enter employee ID' required)
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='name') Name
-                    input.form-control(type='text' id='name' name='name' placeholder='Enter employee name' required)
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='position') Position
-                    input.form-control(type='text' id='position' name='position' placeholder='Enter job title')
-              .row
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='department') Department
-                    input.form-control(type='text' id='department' name='department' placeholder='Enter department')
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='email') Email
-                    input.form-control(type='email' id='email' name='email' placeholder='Enter email address')
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='phone') Phone Number
-                    input.form-control(type='tel' id='phone' name='phone' placeholder='Enter phone number')
-              .row
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='address') Address
-                    input.form-control(type='text' id='address' name='address' placeholder='Enter address')
-                .col-md-4.mb-3
-                  .form-group
-                    label(for='status') Status
-                    .form-check
-                      input.form-check-input(type='checkbox' id='status' name='status')
-                      label.form-check-label(for='status') Active
-                .col-md-4.mb-3
-                  // Empty column for spacing
-              .form-group.mt-3
-                button.btn.btn-primary.btn-lg(type='submit') Add Employee
+      .card-body
+        //- Button to Add Employee
+        .row.mb-4
+          .col-12.d-flex.justify-content-end
+            button.btn.btn-primary.btn-lg.rounded-pill(type='button', data-toggle='modal', data-target='#addEmployeeModal') 
+              i.fas.fa-plus-circle.mr-2
+              | Add New Employee
 
-    //- Data Table with Scroll
-    .row
-      .col-12
-        .table-responsive
-          table.table.table-striped.table-bordered#employeeTable
-            thead.bg-primary.text-white
-              tr
-                th Employee ID
-                th Name
-                th Position
-                th Department
-                th Email
-                th Phone Number
-                th Address
-                th Status
-                th Actions
-            tbody
-              each employee in employees
-                tr
-                  td= employee.employeeId
-                  td= employee.name
-                  td= employee.position
-                  td= employee.department
-                  td= employee.email
-                  td= employee.phone
-                  td= employee.address
-                  td= employee.status ? 'Active' : 'Inactive'
-                  td
-                    a.btn.btn-warning.btn-sm(href=`#` data-toggle='modal' data-target=`#editModal${employee.id}`) Edit
-                    button.btn.btn-danger.btn-sm(type='button', data-toggle='modal', data-target=`#deleteModal${employee.id}`) Delete
+        //- Data Table with Scroll
+        .row
+          .col-12
+            .table-responsive
+              table.table.table-striped.table-hover.table-bordered#employeeTable
+                thead.bg-primary.text-white
+                  tr
+                    th Employee ID
+                    th Name
+                    th Position
+                    th Department
+                    th Email
+                    th Phone Number
+                    th Address
+                    th Status
+                    th Actions
+                tbody
+                  each employee in employees
+                    tr
+                      td= employee.employeeId
+                      td= employee.name
+                      td= employee.position
+                      td= employee.department
+                      td= employee.email
+                      td= employee.phone
+                      td= employee.address
+                      td 
+                        if employee.status === true
+                          span.badge.badge-success Active
+                        else
+                          span.badge.badge-secondary Inactive
+                      td
+                        a.btn.btn-warning.btn-sm.rounded-pill(href=`#`, data-toggle='modal', data-target=`#editModal${employee.id}`)
+                          i.fas.fa-edit.mr-1
+                          | Edit
+                        button.btn.btn-danger.btn-sm.rounded-pill(type='button', data-toggle='modal', data-target=`#deleteModal${employee.id}`)
+                          i.fas.fa-trash-alt.mr-1
+                          | Delete
 
-                    //- Modal for Editing
-                    .modal.fade(id=`editModal${employee.id}`, tabindex='-1', role='dialog')
-                      .modal-dialog(role='document')
-                        .modal-content
-                          .modal-header
-                            h5.modal-title Edit Employee
-                            button.close(type='button', data-dismiss='modal', aria-label='Close')
-                              span(aria-hidden='true') ×
-                          .modal-body
-                            form(action=`/employees/edit/${employee.id}` method='POST')
-                              .form-group
-                                label(for='employeeId') Employee ID
-                                input.form-control(type='text' id='employeeId' name='employeeId' value=employee.employeeId readonly)
-                              .form-group
-                                label(for='name') Name
-                                input.form-control(type='text' id='name' name='name' value=employee.name required)
-                              .form-group
-                                label(for='position') Position
-                                input.form-control(type='text' id='position' name='position' value=employee.position)
-                              .form-group
-                                label(for='department') Department
-                                input.form-control(type='text' id='department' name='department' value=employee.department)
-                              .form-group
-                                label(for='email') Email
-                                input.form-control(type='email' id='email' name='email' value=employee.email)
-                              .form-group
-                                label(for='phone') Phone Number
-                                input.form-control(type='tel' id='phone' name='phone' value=employee.phone)
-                              .form-group
-                                label(for='address') Address
-                                input.form-control(type='text' id='address' name='address' value=employee.address)
-                              .form-group
-                                label(for='status') Status
-                                .form-check
-                                  input.form-check-input(type='checkbox' id='status' name='status' checked=employee.status)
-                                  label.form-check-label(for='status') Active
-                              button.btn.btn-primary(type='submit') Save changes
-                          .modal-footer
-                            button.btn.btn-secondary(type='button', data-dismiss='modal') Close
 
-                    //- Modal for Deleting
-                    .modal.fade(id=`deleteModal${employee.id}`, tabindex='-1', role='dialog')
-                      .modal-dialog(role='document')
-                        .modal-content
-                          .modal-header
-                            h5.modal-title Delete Employee
-                            button.close(type='button', data-dismiss='modal', aria-label='Close')
-                              span(aria-hidden='true') ×
-                          .modal-body
-                            p Are you sure you want to delete this employee?
-                          .modal-footer
-                            button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
-                            a.btn.btn-danger(href=`/employees/delete/${employee.id}`) Delete
+                        //- Modal for Editing
+                        .modal.fade(id=`editModal${employee.id}`, tabindex='-1', role='dialog')
+                          .modal-dialog.modal-lg(role='document')
+                            .modal-content
+                              .modal-header
+                                h5.modal-title Edit Employee
+                                button.close(type='button', data-dismiss='modal', aria-label='Close')
+                                  span(aria-hidden='true') ×
+                              .modal-body
+                                form(action=`/employees/edit/${employee.id}` method='POST')
+                                  .row
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='employeeId') Employee ID
+                                        input.form-control(type='text' id='employeeId' name='employeeId' value=employee.employeeId readonly)
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='name') Name
+                                        input.form-control(type='text' id='name' name='name' value=employee.name required)
+                                  .row
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='position') Position
+                                        input.form-control(type='text' id='position' name='position' value=employee.position)
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='department') Department
+                                        input.form-control(type='text' id='department' name='department' value=employee.department)
+                                  .row
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='email') Email
+                                        input.form-control(type='email' id='email' name='email' value=employee.email)
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='phone') Phone Number
+                                        input.form-control(type='tel' id='phone' name='phone' value=employee.phone)
+                                  .row
+                                    .col-md-12.mb-3
+                                      .form-group
+                                        label(for='address') Address
+                                        input.form-control(type='text' id='address' name='address' value=employee.address)
+                                  .row
+                                    .col-md-6.mb-3
+                                      .form-group
+                                        label(for='status') Status
+                                        .form-check
+                                          input.form-check-input(type='checkbox' id='status' name='status' checked=employee.status)
+                                          label.form-check-label(for='status') Active
+                                  button.btn.btn-primary.btn-lg.rounded-pill(type='submit') Save changes
+                              .modal-footer
+                                button.btn.btn-secondary(type='button', data-dismiss='modal') Close
 
-  //- Scripts
+                        //- Modal for Deleting
+                        .modal.fade(id=`deleteModal${employee.id}`, tabindex='-1', role='dialog')
+                          .modal-dialog(role='document')
+                            .modal-content
+                              .modal-header
+                                h5.modal-title Delete Employee
+                                button.close(type='button', data-dismiss='modal', aria-label='Close')
+                                  span(aria-hidden='true') ×
+                              .modal-body
+                                p Are you sure you want to delete this employee?
+                              .modal-footer
+                                button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
+                                a.btn.btn-danger(href=`/employees/delete/${employee.id}`) Delete
+
+      //- Modal for Adding New Employee
+      .modal.fade#addEmployeeModal(tabindex='-1', role='dialog')
+        .modal-dialog.modal-lg(role='document')
+          .modal-content
+            .modal-header
+              h5.modal-title Add New Employee
+              button.close(type='button', data-dismiss='modal', aria-label='Close')
+                span(aria-hidden='true') ×
+            .modal-body
+              form(action='/employees/add' method='POST')
+                .row
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='employeeId') Employee ID
+                      input.form-control(type='text' id='employeeId' name='employeeId' placeholder='Enter employee ID' required)
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='name') Name
+                      input.form-control(type='text' id='name' name='name' placeholder='Enter employee name' required)
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='position') Position
+                      input.form-control(type='text' id='position' name='position' placeholder='Enter job title')
+                .row
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='department') Department
+                      input.form-control(type='text' id='department' name='department' placeholder='Enter department')
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='email') Email
+                      input.form-control(type='email' id='email' name='email' placeholder='Enter email address')
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='phone') Phone Number
+                      input.form-control(type='tel' id='phone' name='phone' placeholder='Enter phone number')
+                .row
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='address') Address
+                      input.form-control(type='text' id='address' name='address' placeholder='Enter address')
+                  .col-md-4.mb-3
+                    .form-group
+                      label(for='status') Status
+                      .form-check
+                        input.form-check-input(type='checkbox' id='status' name='status')
+                        label.form-check-label(for='status') Active
+                  .col-md-4.mb-3
+                    // Empty column for spacing
+                .form-group.mt-3
+                  button.btn.btn-primary.btn-lg.rounded-pill(type='submit') 
+                    i.fas.fa-plus-circle.mr-2
+                    | Add Employee
+
+  //- Toasts for Notifications
+  .toast-container(position='top-right')
+    .toast.toast-success(role='alert', aria-live='assertive', aria-atomic='true')
+      .toast-header
+        strong.mr-auto Success
+        small.just-now
+        button.ml-2.mb-1.close(type='button', data-dismiss='toast', aria-label='Close')
+          span(aria-hidden='true') ×
+      .toast-body Employee added successfully!
+
+
   script(src='https://code.jquery.com/jquery-3.5.1.min.js')
   script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
   script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')
   script.
     $(document).ready(function() {
-      $('#employeeTable').DataTable({
-        "scrollY": "400px",
+      // Initialize DataTable with custom UI
+      var table = $('#employeeTable').DataTable({
+        "scrollY": "400px", // Adjust this value if needed
         "scrollCollapse": true,
-        "paging": true
+        "paging": true,
+        "searching": true,
+        "ordering": true,
+        "order": [[1, 'asc']],
+        "columnDefs": [{
+          "targets": [8],
+          "orderable": false
+        }],
+        "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
+        "language": {
+          "lengthMenu": "Show _MENU_ entries",
+          "search": "",
+          "searchPlaceholder": "Search...",
+          "paginate": {
+            "previous": "Prev",
+            "next": "Next"
+          }
+        }
       });
+
+      // Show toast notification on adding/editing/deleting employee
+      $('.toast').toast('show');
     });
+  
