@@ -5,26 +5,40 @@ const { Employee } = require('../models');
 // Add/Edit/View Employees
 router.get('/', async (req, res) => {
   const employees = await Employee.findAll();
-  res.render('employee', { employees });
+  const message = req.query.message || '';
+  const type = req.query.type || '';
+  res.render('employee', { employees, message, type });
 });
 
 router.post('/add', async (req, res) => {
-  await Employee.create(req.body);
-  res.redirect('/employees');
+  try {
+    await Employee.create(req.body);
+    res.redirect('/employees?message=Employee added successfully&type=success');
+  } catch (error) {
+    res.redirect('/employees?message=Error adding employee&type=error');
+  }
 });
 
 router.post('/edit/:id', async (req, res) => {
-  await Employee.update(req.body, {
-    where: { id: req.params.id }
-  });
-  res.redirect('/employees');
+  try {
+    await Employee.update(req.body, {
+      where: { id: req.params.id }
+    });
+    res.redirect('/employees?message=Employee updated successfully&type=success');
+  } catch (error) {
+    res.redirect('/employees?message=Error updating employee&type=error');
+  }
 });
 
 router.get('/delete/:id', async (req, res) => {
-  await Employee.destroy({
-    where: { id: req.params.id }
-  });
-  res.redirect('/employees');
+  try {
+    await Employee.destroy({
+      where: { id: req.params.id }
+    });
+    res.redirect('/employees?message=Employee deleted successfully&type=success');
+  } catch (error) {
+    res.redirect('/employees?message=Error deleting employee&type=error');
+  }
 });
 
 module.exports = router;

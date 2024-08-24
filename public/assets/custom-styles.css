@@ -1,0 +1,126 @@
+/* Ensure the table is scrollable */
+.table-responsive {
+  height: 540px; /* Adjust this value if needed */
+  overflow-y: auto; /* Add vertical scrollbar if content exceeds height */
+  position: relative; /* Ensures that pagination stays at the bottom */
+}
+
+/* Ensure pagination buttons are positioned correctly */
+.dataTables_wrapper .dataTables_paginate {
+  position: absolute; /* Position at the bottom of the table */
+  bottom: 0;
+  width: 100%; /* Full width of the table container */
+}
+
+/* Style pagination buttons */
+.dataTables_paginate .paginate_button {
+  border-radius: 50px;
+  border: 2px solid #007bff;
+  padding: 5px 15px;
+  margin: 0 5px;
+}
+
+/* Style active pagination button */
+.dataTables_paginate .paginate_button.current {
+  background-color: #007bff;
+  color: #fff !important;
+}
+
+/* Hover effect for pagination buttons */
+.dataTables_paginate .paginate_button:hover {
+  background-color: #007bff;
+  color: #fff !important;
+}
+
+/* Style previous/next buttons */
+.dataTables_paginate .paginate_button.previous,
+.dataTables_paginate .paginate_button.next {
+  border-radius: 50px;
+  border: 2px solid #007bff;
+  padding: 5px 15px;
+  margin: 0 5px;
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+/* Hover effect for previous/next buttons */
+.dataTables_paginate .paginate_button.previous:hover,
+.dataTables_paginate .paginate_button.next:hover {
+  background-color: #007bff;
+  color: #fff !important;
+}
+
+/* Style the table header */
+table.dataTable thead {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Container for search and show entries controls */
+.dataTables_wrapper .dataTables_info {
+  margin-bottom: 15px; /* Space below the info section */
+}
+
+/* Style for "Show entries" dropdown */
+.dataTables_wrapper .dataTables_length {
+  display: flex;
+  justify-content: flex-start; /* Aligns the "Show entries" dropdown to the left */
+  margin-bottom: 15px; /* Space below the controls */
+}
+
+/* Style the "Show entries" dropdown */
+.dataTables_wrapper .dataTables_length select {
+  border-radius: 20px;
+  border: 2px solid #007bff;
+  padding: 5px 15px;
+  margin-right: 10px; /* Space between dropdown and other controls */
+  background-color: #f8f9fa;
+  color: #495057;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+/* Hover effect for "Show entries" dropdown */
+.dataTables_wrapper .dataTables_length select:hover {
+  border-color: #0056b3;
+}
+
+/* Style for the search input field */
+.dataTables_wrapper .dataTables_filter {
+  display: flex;
+  justify-content: flex-end; /* Aligns the search input to the right */
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  border-radius: 20px;
+  border: 2px solid #007bff;
+  padding: 5px 15px;
+  margin-left: 0; /* Adjust as needed to position the search input */
+  color: #495057;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+/* Placeholder text style for the search input */
+.dataTables_wrapper .dataTables_filter input::placeholder {
+  color: #6c757d;
+}
+
+/* Focus effect for search input */
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: #0056b3;
+}
+
+/* Style the "Show entries" dropdown options */
+.dataTables_wrapper .dataTables_length select option {
+  padding: 5px 10px;
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+/* Hover effect for dropdown options */
+.dataTables_wrapper .dataTables_length select option:hover {
+  background-color: #e2e6ea;
+}
