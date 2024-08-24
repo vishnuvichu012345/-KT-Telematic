@@ -9,7 +9,9 @@ router.get('/', async (req, res) => {
       include: { model: AssetCategory, as: 'category' } 
     });
     const categories = await AssetCategory.findAll();
-    res.render('asset', { assets, categories });
+    const message = req.query.message || null;
+    const type = req.query.type || null;
+    res.render('asset', { assets, categories, message, type });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
@@ -19,10 +21,10 @@ router.get('/', async (req, res) => {
 router.post('/add', async (req, res) => {
   try {
     await Asset.create(req.body);
-    res.redirect('/assets');
+    res.redirect('/assets?message=Asset added successfully&type=success');
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.redirect('/assets?message=Error adding asset&type=error');
   }
 });
 
@@ -35,7 +37,7 @@ router.post('/edit/:id', async (req, res) => {
     const formattedPurchaseDate = new Date(purchaseDate);
     if (isNaN(formattedPurchaseDate.getTime())) {
       console.error('Invalid date format:', purchaseDate);
-      return res.status(400).send('Invalid date format');
+      return res.redirect('/assets?message=Invalid date format&type=error');
     }
     
     // Update the asset in the database
@@ -51,13 +53,12 @@ router.post('/edit/:id', async (req, res) => {
       where: { id: assetId }
     });
 
-    res.redirect('/assets');
+    res.redirect('/assets?message=Asset updated successfully&type=success');
   } catch (error) {
     console.error('Error updating asset:', error);
-    res.status(500).send('Internal Server Error');
+    res.redirect('/assets?message=Error updating asset&type=error');
   }
 });
-
 
 // Delete asset
 router.get('/delete/:id', async (req, res) => {
@@ -65,13 +66,12 @@ router.get('/delete/:id', async (req, res) => {
     await Asset.destroy({
       where: { id: req.params.id }
     });
-    res.redirect('/assets');
+    res.redirect('/assets?message=Asset deleted successfully&type=success');
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.redirect('/assets?message=Error deleting asset&type=error');
   }
 });
-
 
 router.get('/stock', async (req, res) => {
   try {
@@ -162,19 +162,18 @@ router.post('/stock/details', async (req, res) => {
 });
 
 
-
 // Fetch all required data and render the issue page
 router.get('/issue', async (req, res) => {
   try {
     // Fetch all assets
     const assets = await Asset.findAll();
-    console.log('All Assets:', assets.map(asset => asset.toJSON())); // Log all assets in a readable format
+    console.log('All Assets:', assets.map(asset => asset.toJSON()));
 
     // Fetch all employees
     const employees = await Employee.findAll({
       attributes: ['id', 'employeeId', 'name']
     });
-    console.log('Employees:', employees.map(employee => employee.toJSON())); // Log employees
+    console.log('Employees:', employees.map(employee => employee.toJSON()));
 
     // Fetch all issues with associated assets and employees
     const issues = await Issue.findAll({
@@ -183,69 +182,65 @@ router.get('/issue', async (req, res) => {
         { model: Employee }
       ]
     });
-    
-    console.log('Issues:', issues.map(issue => issue.toJSON())); // Log issues
+    console.log('Issues:', issues.map(issue => issue.toJSON()));
 
-    res.render('issue', { assets, employees, issues });
+    const message = req.query.message || '';
+    const type = req.query.type || '';
+    res.render('issue', { assets, employees, issues, message, type });
   } catch (error) {
     console.error('Error fetching data:', error);
-    res.status(500).send('Error fetching data');
+    res.redirect('/assets/issues?message=Error fetching data&type=error');
   }
 });
-
-
 
 
 router.post('/issue/add', async (req, res) => {
   let { assetId, employeeId, issueDate } = req.body;
   
-  // Ensure issueDate is a single date string
+  console.log('Received data for add:', { assetId, employeeId, issueDate });
+
   if (Array.isArray(issueDate)) {
-    issueDate = issueDate[0]; // Assuming you want the first date in the array
+    issueDate = issueDate[0];
   }
   
-  // Sanitize and validate assetId and employeeId
   assetId = parseInt(assetId, 10);
   employeeId = parseInt(employeeId, 10);
   
   if (isNaN(assetId) || isNaN(employeeId)) {
+    console.log('Invalid assetId or employeeId');
     return res.status(400).send('Invalid assetId or employeeId');
   }
   
   try {
-    const sanitizedIssueDate = new Date(issueDate).toISOString(); // Ensure proper date format
+    const sanitizedIssueDate = new Date(issueDate).toISOString();
     
-    // Create issue record
     await Issue.create({ assetId, employeeId, issueDate: sanitizedIssueDate });
-    // Update asset status
     await Asset.update({ status: 'Issued' }, { where: { id: assetId } });
     
-    res.redirect('/assets/issue');
+    res.redirect('/assets/issue?message=Issue added successfully&type=success');
   } catch (error) {
     console.error('Error issuing asset:', error);
-    res.status(500).send('Error issuing asset');
+    res.redirect('/assets/issue?message=Error issuing asset&type=error');
   }
 });
-
-
-
 // Delete an issue
-router.delete('/issue/delete/:id', async (req, res) => {
+router.get('/issue/delete/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const issue = await Issue.findByPk(id);
     if (issue) {
-      await issue.destroy({ where: { id: issue.assetId } });
-      res.sendStatus(200);
+      await issue.destroy();
+      res.redirect('/assets/issue?message=Issue deleted successfully&type=success');
     } else {
-      res.status(404).send('Issue not found');
+      res.status(404).redirect('/issues?message=Issue not found&type=error');
     }
   } catch (error) {
     console.error('Error deleting issue:', error);
-    res.status(500).send('Error deleting issue');
+    res.redirect('/assets/issue?message=Error deleting issue&type=error');
   }
 });
 
+// Edit an issue
 router.post('/issue/edit/:id', async (req, res) => {
   const { id } = req.params;
   const { assetId, employeeId, issueDate } = req.body;
@@ -253,16 +248,15 @@ router.post('/issue/edit/:id', async (req, res) => {
     const issue = await Issue.findByPk(id);
     if (issue) {
       await issue.update({ assetId, employeeId, issueDate });
-      res.redirect('/assets/issue');
+      res.redirect('/assets/issue?message=Issue updated successfully&type=success');
     } else {
-      res.status(404).send('Issue not found');
+      res.status(404).redirect('/issues?message=Issue not found&type=error');
     }
   } catch (error) {
     console.error('Error updating issue:', error);
-    res.status(500).send('Error updating issue');
+    res.redirect('/assets/issue?message=Error updating issue&type=error');
   }
 });
-
 
 
 
