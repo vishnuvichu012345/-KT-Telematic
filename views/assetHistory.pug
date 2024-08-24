@@ -1,38 +1,39 @@
 extends layout
 
 block content
-  .container-fluid.mx-4.my-4
+  .container-fluid.px-4.py-5
     //- Asset History Header
-    .row.mb-4
-      .col-12
-        h1.text-center.mb-4 Asset History
+    .row.justify-content-center.mb-5
+      .col-md-8.text-center
+        h1.display-4.text-dark.font-weight-bold Asset History
+        p.lead.text-muted Explore the complete history of your assets at a glance.
 
     //- Filter Form
-    .row.mb-4
-      .col-md-12
-        .card.bg-light.border-primary.shadow-lg
-          .card-body
-            h5.card-title.text-primary Filter Assets
-            .form-group
-              label(for='assetFilter') Filter by Asset Name
-              select.form-control#assetFilter
+    .row.justify-content-center.mb-4
+      .col-md-6
+        .card.border-0.shadow-sm
+          .card-body.bg-white
+            h5.card-title.text-secondary.text-center.mb-3 Filter by Asset Name
+            .input-group
+              select.custom-select#assetFilter
                 option(value='') Select Asset
                 each asset in assets
                   option(value=asset.id)= `${asset.make} - ${asset.model}`
+              .input-group-append
+                button.btn.btn-primary(type='button') Filter
 
     //- Asset History Table
-    .row.mt-4
-      .col-md-12
-        .card.bg-light.border-primary.shadow-lg
+    .row.justify-content-center
+      .col-md-10
+        .card.border-0.shadow-sm
           .card-body
-            h5.card-title.text-primary Asset History
+            h5.card-title.text-secondary.text-center.mb-4 Asset History Details
             .table-responsive
-              table.table.table-striped.table-bordered#assetHistoryTable
-                thead.bg-primary.text-white
+              table.table.table-hover.table-bordered.text-center#assetHistoryTable
+                thead.thead-dark
                   tr
                     th Asset ID
-                    th Asset Make
-                    th Asset Model
+                    th Make & Model
                     th Employee Name
                     th Location
                     th Purchase Date
@@ -42,12 +43,12 @@ block content
                     th Scrap Date
                     th Status
                 tbody#assetHistoryBody
-                  // DataTable will populate this
+                  tr
+                    td(colspan='9').text-muted No data available
 
   //- Scripts
   script(src='https://code.jquery.com/jquery-3.5.1.min.js')
   script(src='https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js')
-  script(src='https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css')
   script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js')
   script.
     $(document).ready(function() {
@@ -55,8 +56,7 @@ block content
         "data": [],
         "columns": [
           { "data": "id" },
-          { "data": "make" },
-          { "data": "model" },
+          { "data": "makeModel" },
           { "data": "employeeName" },
           { "data": "location" },
           { "data": "purchaseDate" },
@@ -65,7 +65,22 @@ block content
           { "data": "returnDate" },
           { "data": "scrapDate" },
           { "data": "status" }
-        ]
+        ],
+        "language": {
+          "emptyTable": "No asset history available",
+          "search": "Search:",
+          "paginate": {
+            "first": "First",
+            "last": "Last",
+            "next": "Next",
+            "previous": "Previous"
+          },
+          "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+          "infoEmpty": "No entries found"
+        },
+        "paging": true,
+        "searching": true,
+        "info": true
       });
 
       $('#assetFilter').change(function() {
@@ -75,15 +90,14 @@ block content
             var asset = data.asset;
             var row = {
               id: asset.id,
-              make: asset.make,
-              model: asset.model,
+              makeModel: `${asset.make} - ${asset.model}`,
               employeeName: asset.Issues.length > 0 ? (asset.Issues[0].Employee ? asset.Issues[0].Employee.name : 'N/A') : 'N/A',
               location: asset.location,
-              purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toDateString() : 'N/A',
+              purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A',
               cost: asset.cost ? `$${asset.cost}` : 'N/A',
-              issueDate: asset.Issues.length > 0 ? (asset.Issues[0].issueDate ? new Date(asset.Issues[0].issueDate).toDateString() : 'N/A') : 'N/A',
-              returnDate: asset.Returndata.length > 0 ? (asset.Returndata[0].returnDate ? new Date(asset.Returndata[0].returnDate).toDateString() : 'N/A') : 'N/A',
-              scrapDate: asset.ScrapAssets.length > 0 ? (asset.ScrapAssets[0].scrapDate ? new Date(asset.ScrapAssets[0].scrapDate).toDateString() : 'N/A') : 'N/A',
+              issueDate: asset.Issues.length > 0 ? (asset.Issues[0].issueDate ? new Date(asset.Issues[0].issueDate).toLocaleDateString() : 'N/A') : 'N/A',
+              returnDate: asset.Returndata.length > 0 ? (asset.Returndata[0].returnDate ? new Date(asset.Returndata[0].returnDate).toLocaleDateString() : 'N/A') : 'N/A',
+              scrapDate: asset.ScrapAssets.length > 0 ? (asset.ScrapAssets[0].scrapDate ? new Date(asset.ScrapAssets[0].scrapDate).toLocaleDateString() : 'N/A') : 'N/A',
               status: asset.ScrapAssets.length > 0 ? 'Scrapped' :
                       asset.Returndata.length > 0 ? 'Returned' :
                       asset.Issues.length > 0 ? 'Issued' : 'Available'
