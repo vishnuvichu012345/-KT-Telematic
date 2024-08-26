@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { Asset, AssetCategory, Issue, Employee,Returndata,ScrapAsset  } = require('../models');
+const amqp = require('amqplib/callback_api');
+
 
 // Add/Edit/View Assets
 router.get('/', async (req, res) => {
@@ -194,35 +196,80 @@ router.get('/issue', async (req, res) => {
 });
 
 
+
+
 router.post('/issue/add', async (req, res) => {
   let { assetId, employeeId, issueDate } = req.body;
-  
+
   console.log('Received data for add:', { assetId, employeeId, issueDate });
 
   if (Array.isArray(issueDate)) {
     issueDate = issueDate[0];
   }
-  
+
   assetId = parseInt(assetId, 10);
   employeeId = parseInt(employeeId, 10);
-  
+
   if (isNaN(assetId) || isNaN(employeeId)) {
     console.log('Invalid assetId or employeeId');
     return res.status(400).send('Invalid assetId or employeeId');
   }
-  
+
   try {
     const sanitizedIssueDate = new Date(issueDate).toISOString();
-    
+
+    // Create the issue
     await Issue.create({ assetId, employeeId, issueDate: sanitizedIssueDate });
     await Asset.update({ status: 'Issued' }, { where: { id: assetId } });
-    
+
+    // Fetch employee details
+    const employee = await Employee.findByPk(employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    // Publish a message to RabbitMQ
+    amqp.connect('amqp://localhost', (error0, connection) => {
+      if (error0) {
+        throw error0;
+      }
+      connection.createChannel((error1, channel) => {
+        if (error1) {
+          throw error1;
+        }
+
+        const queue = 'asset_notifications';
+        const message = JSON.stringify({
+          email: employee.email,
+          name: employee.name,
+          assetId: assetId,
+          issueDate: sanitizedIssueDate
+        });
+
+        channel.assertQueue(queue, {
+          durable: false
+        });
+
+        channel.sendToQueue(queue, Buffer.from(message));
+        console.log(" [x] Sent '%s'", message);
+      });
+
+      setTimeout(() => {
+        connection.close();
+      }, 500);
+    });
+
     res.redirect('/assets/issue?message=Issue added successfully&type=success');
   } catch (error) {
     console.error('Error issuing asset:', error);
     res.redirect('/assets/issue?message=Error issuing asset&type=error');
   }
 });
+
+
+
+
+
 // Delete an issue
 router.get('/issue/delete/:id', async (req, res) => {
   const { id } = req.params;
