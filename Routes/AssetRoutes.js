@@ -3,6 +3,7 @@ const router = express.Router();
 const { Asset, AssetCategory, Issue, Employee,Returndata,ScrapAsset  } = require('../models');
 const amqp = require('amqplib/callback_api');
 // const client = require('../config/redisClient'); 
+const { Op } = require('sequelize');
 
 
 // Add/Edit/View Assets
@@ -168,12 +169,27 @@ router.post('/stock/details', async (req, res) => {
 });
 
 
+
 // Fetch all required data and render the issue page
 router.get('/issue', async (req, res) => {
   try {
     // Fetch all assets
-    const assets = await Asset.findAll();
-    console.log('All Assets:', assets.map(asset => asset.toJSON()));
+    const allAssets = await Asset.findAll({
+      where: {
+        status: { [Op.ne]: 'Scrapped' } // Assuming 'status' field indicates if an asset is scrapped
+      }
+    });
+
+    // Fetch all issued assets
+    const issuedAssets = await Issue.findAll({
+      attributes: ['assetId'], // Assuming assetId is the foreign key in Issue model
+    });
+
+    // Create a set of issued asset IDs
+    const issuedAssetIds = new Set(issuedAssets.map(issue => issue.assetId));
+
+    // Filter out issued assets from all assets
+    const availableAssets = allAssets.filter(asset => !issuedAssetIds.has(asset.id));
 
     // Fetch all employees
     const employees = await Employee.findAll({
@@ -192,12 +208,13 @@ router.get('/issue', async (req, res) => {
 
     const message = req.query.message || '';
     const type = req.query.type || '';
-    res.render('issue', { assets, employees, issues, message, type });
+    res.render('issue', { assets: availableAssets, employees, issues, message, type });
   } catch (error) {
     console.error('Error fetching data:', error);
     res.redirect('/assets/issues?message=Error fetching data&type=error');
   }
 });
+
 
 
 
