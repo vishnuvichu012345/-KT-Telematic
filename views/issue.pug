@@ -1,6 +1,8 @@
 extends layout
+
 block styles
   link(rel='stylesheet', href='custom-styles.css')
+
 block content
   .container-fluid.my-4
     //- Card Container for Issue Assets
@@ -40,6 +42,9 @@ block content
                         button.btn.btn-danger.btn-sm.rounded-pill(type='button', data-toggle='modal', data-target=`#deleteIssueModal-${issue.id}`)
                           i.fas.fa-trash-alt.mr-1
                           | Delete
+                        button.btn.btn-info.btn-sm.rounded-pill(type='button', data-toggle='modal', data-target=`#returnIssueModal-${issue.id}`)
+                          i.fas.fa-undo.mr-1
+                          | Return
 
                         //- Modal for Editing Issue
                         .modal.fade(id=`editIssueModal-${issue.id}`, tabindex='-1', role='dialog')
@@ -87,6 +92,37 @@ block content
                               .modal-footer
                                 button.btn.btn-secondary(type='button', data-dismiss='modal') Cancel
                                 a.btn.btn-danger(href=`/assets/issue/delete/${issue.id}`) Delete
+
+                        //- Modal for Returning Issue
+                        .modal.fade(id=`returnIssueModal-${issue.id}`, tabindex='-1', role='dialog')
+                          .modal-dialog.modal-lg(role='document')
+                            .modal-content
+                              .modal-header
+                                h5.modal-title Return Asset
+                                button.close(type='button', data-dismiss='modal', aria-label='Close')
+                                  span(aria-hidden='true') ×
+                              .modal-body
+                                form(action=`/assets/return/add` method='POST')
+                                  input(type='hidden' name='assetId' value=issue.assetId)
+                                  input(type='hidden' name='employeeId' value=issue.employeeId)
+                                  .row
+                                    .col-md-4.mb-3
+                                      .form-group
+                                        label(for='returnDate') Return Date
+                                        input.form-control(type='date' id='returnDate' name='returnDate' required)
+                                    .col-md-4.mb-3
+                                      .form-group
+                                        label(for='returnReason') Return Reason
+                                        select.form-control(name='returnReason' id='returnReason' required)
+                                          option(value='') Select Reason
+                                          option(value='upgrade') Upgrade
+                                          option(value='repair') Repair
+                                          option(value='resignation') Resignation
+                                          option(value='other') Other
+                                  .form-group.mt-3
+                                    button.btn.btn-primary.btn-lg.rounded-pill(type='submit') 
+                                      i.fas.fa-undo.mr-2
+                                      | Return Asset
 
     //- Modal for Adding New Asset Issue
     .modal.fade#addIssueModal(tabindex='-1', role='dialog')
@@ -156,20 +192,6 @@ block content
         "columnDefs": [{
           "targets": [3],
           "orderable": false
-        }],
-        "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-5"i><"col-md-7"p>>',
-        "language": {
-          "lengthMenu": "Show _MENU_ entries",
-          "search": "",
-          "searchPlaceholder": "Search...",
-          "paginate": {
-            "previous": "Prev",
-            "next": "Next"
-          }
-        }
+        }]
       });
-        // Show toast notification on adding/editing/deleting category
-      $('.toast').toast('show');
     });
-
-

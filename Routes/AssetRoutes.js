@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Asset, AssetCategory, Issue, Employee,Returndata,ScrapAsset  } = require('../models');
 const amqp = require('amqplib/callback_api');
+// const client = require('../config/redisClient'); 
 
 
 // Add/Edit/View Assets
@@ -19,6 +20,9 @@ router.get('/', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+
+
 
 router.post('/add', async (req, res) => {
   try {
@@ -352,16 +356,22 @@ router.get('/return', async (req, res) => {
 
 
 
-// Add a new return
 router.post('/return/add', async (req, res) => {
   const { assetId, employeeId, returnDate, returnReason } = req.body;
   try {
+    // Add return data to Returndata table
     await Returndata.create({ assetId, employeeId, returnDate, returnReason });
+    
+    // Update the asset status to 'Available'
     await Asset.update({ status: 'Available' }, { where: { id: assetId } });
-    res.redirect('/assets/return');
+    
+    // Remove the issue record from the Issue table
+    await Issue.destroy({ where: { assetId: assetId, employeeId: employeeId } });
+    
+    res.redirect('/assets/issue?message=Asset returned successfully&type=success');
   } catch (error) {
     console.error('Error returning asset:', error);
-    res.status(500).send('Error returning asset');
+    res.redirect('/assets/issue?message=Error returning asset&type=error');
   }
 });
 
