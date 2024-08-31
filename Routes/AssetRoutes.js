@@ -2,23 +2,39 @@ const express = require('express');
 const router = express.Router();
 const { Asset, AssetCategory, Issue, Employee,Returndata,ScrapAsset  } = require('../models');
 const amqp = require('amqplib/callback_api');
-// const client = require('../config/redisClient'); 
+
+const redisClient = require('../config/redisClient');
 
 
-// Add/Edit/View Assets
-router.get('/', async (req, res) => {
-  try {
-    const assets = await Asset.findAll({ 
-      include: { model: AssetCategory, as: 'category' } 
-    });
-    const categories = await AssetCategory.findAll();
-    const message = req.query.message || null;
-    const type = req.query.type || null;
-    res.render('asset', { assets, categories, message, type });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
+router.get('/', (req, res) => {
+  redisClient.get('assets', async (err, assetsData) => {
+      if (err) {
+          console.error('Redis GET error:', err);
+          return res.status(500).send('Internal Server Error');
+      }
+
+      if (assetsData) {
+          console.log('Assets found in cache');
+          const assets = JSON.parse(assetsData);
+          const categories = await AssetCategory.findAll();
+          return res.render('asset', { assets, categories });
+      } else {
+          console.log('Cache miss. Fetching from database...');
+          try {
+              const assets = await Asset.findAll({
+                  include: { model: AssetCategory, as: 'category' }
+              });
+              const categories = await AssetCategory.findAll();
+
+              // Cache the results in Redis for future requests
+              redisClient.setex('assets', 3600, JSON.stringify(assets));
+              return res.render('asset', { assets, categories });
+          } catch (error) {
+              console.error('Error fetching assets:', error);
+              return res.status(500).send('Internal Server Error');
+          }
+      }
+  });
 });
 
 
@@ -27,12 +43,15 @@ router.get('/', async (req, res) => {
 router.post('/add', async (req, res) => {
   try {
     await Asset.create(req.body);
+    await redisClient.del('assets');
     res.redirect('/assets?message=Asset added successfully&type=success');
   } catch (error) {
     console.error(error);
     res.redirect('/assets?message=Error adding asset&type=error');
   }
 });
+
+
 
 router.post('/edit/:id', async (req, res) => {
   try {
@@ -58,7 +77,7 @@ router.post('/edit/:id', async (req, res) => {
     }, {
       where: { id: assetId }
     });
-
+    await redisClient.del('assets');
     res.redirect('/assets?message=Asset updated successfully&type=success');
   } catch (error) {
     console.error('Error updating asset:', error);
@@ -72,6 +91,7 @@ router.get('/delete/:id', async (req, res) => {
     await Asset.destroy({
       where: { id: req.params.id }
     });
+    await redisClient.del('assets');
     res.redirect('/assets?message=Asset deleted successfully&type=success');
   } catch (error) {
     console.error(error);

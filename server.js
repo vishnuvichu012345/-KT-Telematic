@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cacheRoutes = require('./routes/cacheRoutes');
 const path = require('path');
 const app = express();
 const port = 3000;
@@ -30,6 +31,7 @@ app.use('/employees', employeeRoutes);
 app.use('/assets', assetRoutes);
 app.use('/assetCategories', assetCategoryRoutes);
 app.use('/assets/scrap', scrapAssetRouter);
+app.use('/api', cacheRoutes);
 // app.use('/assets/history', assetHistoryRouter);
 
 app.use('/', home);
