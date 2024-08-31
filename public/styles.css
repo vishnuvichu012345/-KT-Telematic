@@ -3,7 +3,13 @@
 /* Change the background color of the navbar */
 .navbar {
   background-color: #343a40 !important;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
 }
+
+.navbar.scrolled {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow */
+}
+
 
 
 body {
@@ -13,18 +19,28 @@ body {
 /* Change the color of the navbar brand */
 .navbar-brand {
   color: #ffffff !important;
+  font-weight: bold;
+  transition: color 0.3s ease; /* Smooth transition */
 }
-
 /* Change the color of the navbar links */
 .nav-link {
   color: #ffffff !important;
+  transition: color 0.3s ease, background-color 0.3s ease; /* Smooth transition */
 }
+
+
+.navbar-nav .nav-item.active .nav-link {
+  border-bottom: 3px solid #f8f9fa; /* White underline for active tab */
+  font-weight: bold;
+}
+
 
 /* Add hover effect for navbar links */
 .nav-link:hover {
   color: #f8f9fa !important;
   background-color: #495057 !important;
   border-radius: 4px;
+  transform: translateY(-2px); /* Slightly lift on hover */
 }
 
 /* Add custom styles for jumbotron */
@@ -33,19 +49,20 @@ body {
   color: #ffffff; /* White text */
   padding: 4rem 1rem;
   text-align: center; /* Center text */
+  border-radius: 0.5rem; /* Rounded corners */
 }
 
 /* Add custom button styles */
 .btn-primary {
   background-color: #007bff;
   border-color: #007bff;
+  transition: background-color 0.3s ease, border-color 0.3s ease; /* Smooth transition */
 }
 
 .btn-primary:hover {
   background-color: #0056b3;
   border-color: #0056b3;
 }
-
 
 .card {
   border: 1px solid #dee2e6; /* Light border color */
@@ -64,8 +81,55 @@ body {
 .btn-light {
   background-color: #ffffff; /* Light button for contrast */
   border-color: #ffffff;
+  transition: background-color 0.3s ease, border-color 0.3s ease; /* Smooth transition */
 }
+
 
 i.fas {
   color: #007bff; /* Icon color */
+}
+
+
+
+.chart-container {
+  position: relative;
+  height: 300px; /* Adjust this value as needed */
+  width: 100%;
+}
+
+
+
+/* Card styling */
+.card.custom-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
+  cursor: pointer; /* Show pointer cursor on hover */
+}
+
+.card.custom-card:hover {
+  transform: translateY(-5px); /* Lift card on hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhance shadow on hover */
+}
+
+.card.custom-card .card-body {
+  transition: background-color 0.3s ease; /* Smooth background color transition */
+}
+
+.card.custom-card:hover .card-body {
+  background-color: #f8f9fa; /* Light background on hover */
+}
+
+/* Specific styling for the cards in the layout */
+.card.shadow-sm {
+  border: 1px solid #dee2e6; /* Light border color */
+  border-radius: 0.5rem; /* Rounded corners */
+}
+
+.card.shadow-lg {
+  border: 1px solid #dee2e6; /* Light border color */
+  border-radius: 0.5rem; /* Rounded corners */
+}
+
+/* Apply custom card class to specific cards */
+.card.shadow-sm.cdcl {
+  background-color: #ffffff; /* White background for the card */
 }

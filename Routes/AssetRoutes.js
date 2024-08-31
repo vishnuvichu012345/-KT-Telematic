@@ -479,4 +479,28 @@ router.get('/history/:id', async (req, res) => {
 });
 
 
+// Route to get data for the bar graph
+router.get('/asset-status', async (req, res) => {
+  try {
+    // Count total assets
+    const totalAssets = await Asset.count();
+
+    // Count returned assets
+    const returnedAssets = await Returndata.count();
+
+    // Count scraped assets
+    const scrapedAssets = await ScrapAsset.count();
+
+    // Calculate assets in stock (assuming assets in stock are those not returned or scraped)
+    const inStock = totalAssets- scrapedAssets;
+
+    // Send the data as a JSON response
+    res.json({ totalAssets, returnedAssets, scrapedAssets, inStock });
+  } catch (error) {
+    console.error('Error fetching asset status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 module.exports = router;

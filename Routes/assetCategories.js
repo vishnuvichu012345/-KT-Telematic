@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { AssetCategory } = require('../models');
+const { AssetCategory,Asset } = require('../models');
+const { Sequelize } = require('sequelize');
 
 // Get all asset categories
 router.get('/', async (req, res) => {
@@ -51,5 +52,31 @@ router.get('/delete/:id', async (req, res) => {
     res.redirect('/assetCategories?message=Error deleting asset category&type=error');
   }
 });
+
+
+
+
+router.get('/asset-categories', async (req, res) => {
+  try {
+    const categories = await AssetCategory.findAll({
+      attributes: [
+        'name',
+        [Sequelize.fn('COUNT', Sequelize.col('assets.id')), 'assetCount']
+      ],
+      include: [{
+        model: Asset,
+        as: 'assets',
+        attributes: []
+      }],
+      group: ['AssetCategory.id']
+    });
+
+    res.json(categories); // Send the data as JSON response
+  } catch (error) {
+    console.error('Error fetching asset categories:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 module.exports = router;

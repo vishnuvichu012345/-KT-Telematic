@@ -16,25 +16,37 @@ html
           span.navbar-toggler-icon
         .collapse.navbar-collapse#navbarNav
           ul.navbar-nav.mr-auto
-            li.nav-item
+            li.nav-item(class=activePage === 'employees' ? 'active' : '')
               a.nav-link(href='/employees') Employee Master
-            li.nav-item
+            li.nav-item(class=activePage === 'assets' ? 'active' : '')
               a.nav-link(href='/assets') Asset Master
-            li.nav-item
+            li.nav-item(class=activePage === 'assetCategories' ? 'active' : '')
               a.nav-link(href='/assetCategories') Asset Category Master
-            li.nav-item
+            li.nav-item(class=activePage === 'stock' ? 'active' : '')
               a.nav-link(href='/assets/stock') Stock View
-            li.nav-item
+            li.nav-item(class=activePage === 'issue' ? 'active' : '')
               a.nav-link(href='/assets/issue') Issue Asset
-            li.nav-item
+            li.nav-item(class=activePage === 'return' ? 'active' : '')
               a.nav-link(href='/assets/return') Return Asset
-            li.nav-item
+            li.nav-item(class=activePage === 'scrap' ? 'active' : '')
               a.nav-link(href='/assets/scrap') Scrap Asset
-            li.nav-item
+            li.nav-item(class=activePage === 'history' ? 'active' : '')
               a.nav-link(href='/assets/history') Asset History
 
     block content
 
-    script(src='https://code.jquery.com/jquery-3.5.1.min.js')
-    script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
-    script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')
+    block scripts
+      script(src='https://code.jquery.com/jquery-3.5.1.min.js')
+      script(src='https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js')
+      script(src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js')
+      script.
+        window.addEventListener('scroll', function() {
+          var navbar = document.querySelector('.navbar');
+          if (window.scrollY > 10) {
+            navbar.classList.add('scrolled');
+          } else {
+            navbar.classList.remove('scrolled');
+          }
+        });
+
+
