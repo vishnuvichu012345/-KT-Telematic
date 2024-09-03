@@ -2,13 +2,11 @@ extends layout
 
 block content
   .container-fluid.px-4.py-5
-    //- Asset History Header
     .row.justify-content-center.mb-5
       .col-md-8.text-center
         h1.display-4.text-dark.font-weight-bold Asset History
         p.lead.text-muted Explore the complete history of your assets at a glance.
 
-    //- Filter Form
     .row.justify-content-center.mb-4
       .col-md-6
         .card.border-0.shadow-sm
@@ -22,7 +20,6 @@ block content
               .input-group-append
                 button.btn.btn-primary(type='button') Filter
 
-    //- Asset History Table
     .row.justify-content-center
       .col-md-10
         .card.border-0.shadow-sm
@@ -43,8 +40,26 @@ block content
                     th Scrap Date
                     th Status
                 tbody#assetHistoryBody
-                  tr
-                    td(colspan='9').text-muted No data available
+                  each asset in assets
+                    tr
+                      td= asset.id
+                      td= `${asset.make} - ${asset.model}`
+                      td= asset.Issues.length > 0 && asset.Issues[0].Employee ? asset.Issues[0].Employee.name : 'N/A'
+                      td= asset.location || 'N/A'
+                      td= asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A'
+                      td= asset.cost ? `$${asset.cost}` : 'N/A'
+                      td= asset.Issues.length > 0 && asset.Issues[0].issueDate ? new Date(asset.Issues[0].issueDate).toLocaleDateString() : 'N/A'
+                      td= asset.Returndata.length > 0 && asset.Returndata[0].returnDate ? new Date(asset.Returndata[0].returnDate).toLocaleDateString() : 'N/A'
+                      td= asset.ScrapAssets.length > 0 && asset.ScrapAssets[0].scrapDate ? new Date(asset.ScrapAssets[0].scrapDate).toLocaleDateString() : 'N/A'
+                      td
+                        if asset.ScrapAssets.length > 0
+                          | Scrapped
+                        else if asset.Returndata.length > 0
+                          | Returned
+                        else if asset.Issues.length > 0
+                          | Issued
+                        else
+                          | Available
 
   //- Scripts
   script(src='https://code.jquery.com/jquery-3.5.1.min.js')
@@ -53,7 +68,6 @@ block content
   script.
     $(document).ready(function() {
       var assetHistoryTable = $('#assetHistoryTable').DataTable({
-        "data": [],
         "columns": [
           { "data": "id" },
           { "data": "makeModel" },
@@ -88,23 +102,29 @@ block content
         if (assetId) {
           $.get('/assets/history/' + assetId, function(data) {
             var asset = data.asset;
-            var row = {
-              id: asset.id,
-              makeModel: `${asset.make} - ${asset.model}`,
-              employeeName: asset.Issues.length > 0 ? (asset.Issues[0].Employee ? asset.Issues[0].Employee.name : 'N/A') : 'N/A',
-              location: asset.location,
-              purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A',
-              cost: asset.cost ? `$${asset.cost}` : 'N/A',
-              issueDate: asset.Issues.length > 0 ? (asset.Issues[0].issueDate ? new Date(asset.Issues[0].issueDate).toLocaleDateString() : 'N/A') : 'N/A',
-              returnDate: asset.Returndata.length > 0 ? (asset.Returndata[0].returnDate ? new Date(asset.Returndata[0].returnDate).toLocaleDateString() : 'N/A') : 'N/A',
-              scrapDate: asset.ScrapAssets.length > 0 ? (asset.ScrapAssets[0].scrapDate ? new Date(asset.ScrapAssets[0].scrapDate).toLocaleDateString() : 'N/A') : 'N/A',
-              status: asset.ScrapAssets.length > 0 ? 'Scrapped' :
-                      asset.Returndata.length > 0 ? 'Returned' :
-                      asset.Issues.length > 0 ? 'Issued' : 'Available'
-            };
+            if (asset) {
+              var row = {
+                id: asset.id,
+                makeModel: `${asset.make} - ${asset.model}`,
+                employeeName: asset.Issues.length > 0 ? (asset.Issues[0].Employee ? asset.Issues[0].Employee.name : 'N/A') : 'N/A',
+                location: asset.location || 'N/A',
+                purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A',
+                cost: asset.cost ? `$${asset.cost}` : 'N/A',
+                issueDate: asset.Issues.length > 0 ? (asset.Issues[0].issueDate ? new Date(asset.Issues[0].issueDate).toLocaleDateString() : 'N/A') : 'N/A',
+                returnDate: asset.Returndata.length > 0 ? (asset.Returndata[0].returnDate ? new Date(asset.Returndata[0].returnDate).toLocaleDateString() : 'N/A') : 'N/A',
+                scrapDate: asset.ScrapAssets.length > 0 ? (asset.ScrapAssets[0].scrapDate ? new Date(asset.ScrapAssets[0].scrapDate).toLocaleDateString() : 'N/A') : 'N/A',
+                status: asset.ScrapAssets.length > 0 ? 'Scrapped' :
+                        asset.Returndata.length > 0 ? 'Returned' :
+                        asset.Issues.length > 0 ? 'Issued' : 'Available'
+              };
 
-            assetHistoryTable.clear().rows.add([row]).draw();
+              assetHistoryTable.clear().rows.add([row]).draw();
+            } else {
+              assetHistoryTable.clear().draw(); // Clear the table if no asset data is found
+            }
           });
+        } else {
+          assetHistoryTable.clear().draw(); // Clear the table if no asset is selected
         }
       });
     });

@@ -1,8 +1,9 @@
 extends layout
 
 block content
-  .jumbotron.jumbotron-fluid.bg-info.text-white.text-center
-    .container
+  //- Jumbotron Section with Background Image and Glass Effect
+  .jumbotron.jumbotron-fluid.bg-info.text-white.text-center(style="background-image: url('../'); background-size: cover; background-position: center;")
+    .container(style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); padding: 20px; border-radius: 10px;")
       h1.display-4 Welcome to Asset Management System
       p.lead Manage your company's assets efficiently with our comprehensive system.
       hr.my-4
