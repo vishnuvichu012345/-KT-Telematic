@@ -5,14 +5,14 @@ const redisClient = require('../config/redisClient'); // Adjust path as needed
 
 router.get('/cache', async (req, res) => {
     try {
-        redisClient.get('assets', (err, assetsData) => {
+        redisClient.get('employee', (err, employeeData) => {
             if (err) {
                 console.error('Redis GET error:', err);
                 return res.status(500).send('Error fetching cache data');
             }
             
-            if (assetsData) {
-                res.json({ cache: JSON.parse(assetsData) });
+            if (employeeData) {
+                res.json({ cache: JSON.parse(employeeData) });
             } else {
                 res.json({ cache: null, message: 'No data found in cache' });
             }
@@ -22,5 +22,8 @@ router.get('/cache', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+
+
 
 module.exports = router;

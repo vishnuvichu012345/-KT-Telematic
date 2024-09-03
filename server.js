@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cacheRoutes = require('./routes/cacheRoutes');
+const cacheRoutes = require('./Routes/cacheRoutes');
 const path = require('path');
 const app = express();
 const port = 3000;

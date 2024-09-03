@@ -21,7 +21,12 @@ module.exports = (sequelize, DataTypes) => {
     issueDate: {
       type: DataTypes.DATE,
       allowNull: false,
-    }
+    },
+    isReturned: {  // New column for soft delete
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,  // Default to false, meaning not returned
+    },
   }, {
     sequelize,
     modelName: 'Issue',

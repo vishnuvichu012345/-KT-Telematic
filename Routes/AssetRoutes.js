@@ -99,94 +99,118 @@ router.get('/delete/:id', async (req, res) => {
   }
 });
 
+
+// Fetch all stock information with Redis caching
 router.get('/stock', async (req, res) => {
   try {
-    console.log("Fetching all assets...");
-    const assets = await Asset.findAll();
-    console.log("Fetched assets:", assets);
+    const cacheKey = 'stock'; // Define a cache key for stock data
 
-    const issuedAssets = await Issue.findAll({
-      attributes: ['assetId'],
-      raw: true
-    });
-
-    const scrappedAssets = await ScrapAsset.findAll({
-      attributes: ['assetId'],
-      raw: true
-    });
-
-    const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
-    const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
-
-    const stock = assets.filter(asset => 
-      !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
-    );
-
-    const stockByBranch = stock.reduce((acc, asset) => {
-      const branch = asset.location; 
-      if (!acc[branch]) {
-        acc[branch] = { totalAssets: 0, totalValue: 0 };
+    // Check if data is in Redis cache
+    redisClient.get(cacheKey, async (err, cachedData) => {
+      if (err) {
+        console.error('Redis GET error:', err);
+        return res.status(500).send('Internal Server Error');
       }
-      acc[branch].totalAssets += 1;
-      acc[branch].totalValue += asset.cost || 0;
-      return acc;
-    }, {});
 
-    const stocks = Object.keys(stockByBranch).map(branch => ({
-      branch,
-      totalAssets: stockByBranch[branch].totalAssets,
-      totalValue: stockByBranch[branch].totalValue
-    }));
+      if (cachedData) {
+        console.log('Cache hit. Returning cached data.');
+        return res.render('stock', { stocks: JSON.parse(cachedData) });
+      }
 
-    res.render('stock', { stocks });
+      console.log('Cache miss. Fetching from database...');
+      // Fetch data from database
+      const assets = await Asset.findAll();
+      const issuedAssets = await Issue.findAll({ attributes: ['assetId'], raw: true });
+      const scrappedAssets = await ScrapAsset.findAll({ attributes: ['assetId'], raw: true });
+
+      const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
+      const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
+
+      const stock = assets.filter(asset => 
+        !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
+      );
+
+      const stockByBranch = stock.reduce((acc, asset) => {
+        const branch = asset.location; 
+        if (!acc[branch]) {
+          acc[branch] = { totalAssets: 0, totalValue: 0 };
+        }
+        acc[branch].totalAssets += 1;
+        acc[branch].totalValue += asset.cost || 0;
+        return acc;
+      }, {});
+
+      const stocks = Object.keys(stockByBranch).map(branch => ({
+        branch,
+        totalAssets: stockByBranch[branch].totalAssets,
+        totalValue: stockByBranch[branch].totalValue
+      }));
+
+      // Cache the fetched data in Redis
+      redisClient.setex(cacheKey, 3600, JSON.stringify(stocks)); // Cache for 1 hour
+
+      res.render('stock', { stocks });
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching stock data:', error);
     res.status(500).send('Internal Server Error');
   }
 });
 
 router.post('/stock/details', async (req, res) => {
   const { branch } = req.body;
+  const cacheKey = `stock_details_${branch}`; // Define a cache key for branch-specific details
+
   try {
-    const assetsInBranch = await Asset.findAll({
-      where: { location: branch }
+    // Check if data is in Redis cache
+    redisClient.get(cacheKey, async (err, cachedData) => {
+      if (err) {
+        console.error('Redis GET error:', err);
+        return res.status(500).send('Internal Server Error');
+      }
+
+      if (cachedData) {
+        console.log('Cache hit. Returning cached data.');
+        return res.json(JSON.parse(cachedData));
+      }
+
+      console.log('Cache miss. Fetching from database...');
+      // Fetch data from database
+      const assetsInBranch = await Asset.findAll({ where: { location: branch } });
+      const issuedAssets = await Issue.findAll({
+        include: [{ model: Asset, attributes: ['id', 'location'] }],
+        where: { '$Asset.location$': branch }
+      });
+      const scrappedAssets = await ScrapAsset.findAll({ attributes: ['assetId'], raw: true });
+
+      const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
+      const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
+
+      const availableAssets = assetsInBranch.filter(asset => 
+        !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
+      );
+
+      const assetDetails = availableAssets.map(asset => ({
+        serialNumber: asset.serialNumber,
+        uniqueId: asset.uniqueId,
+        make: asset.make,
+        model: asset.model,
+        status: asset.status,
+        location: asset.location,
+        purchaseDate: asset.purchaseDate ? asset.purchaseDate.toDateString() : '',
+        cost: asset.cost || 0
+      }));
+
+      // Cache the fetched data in Redis
+      redisClient.setex(cacheKey, 3600, JSON.stringify(assetDetails)); // Cache for 1 hour
+
+      res.json(assetDetails);
     });
-
-    const issuedAssets = await Issue.findAll({
-      include: [{ model: Asset, attributes: ['id', 'location'] }],
-      where: { '$Asset.location$': branch }
-    });
-
-    const scrappedAssets = await ScrapAsset.findAll({
-      attributes: ['assetId'],
-      raw: true
-    });
-
-    const issuedAssetIds = issuedAssets.map(issue => issue.assetId);
-    const scrappedAssetIds = scrappedAssets.map(scrap => scrap.assetId);
-
-    const availableAssets = assetsInBranch.filter(asset => 
-      !issuedAssetIds.includes(asset.id) && !scrappedAssetIds.includes(asset.id)
-    );
-
-    const assetDetails = availableAssets.map(asset => ({
-      serialNumber: asset.serialNumber,
-      uniqueId: asset.uniqueId,
-      make: asset.make,
-      model: asset.model,
-      status: asset.status,
-      location: asset.location,
-      purchaseDate: asset.purchaseDate ? asset.purchaseDate.toDateString() : '',
-      cost: asset.cost || 0
-    }));
-
-    res.json(assetDetails);
   } catch (error) {
-    console.error("Error fetching asset details:", error);
+    console.error('Error fetching asset details:', error);
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 // Fetch all required data and render the issue page
 router.get('/issue', async (req, res) => {
@@ -201,8 +225,9 @@ router.get('/issue', async (req, res) => {
     });
     console.log('Employees:', employees.map(employee => employee.toJSON()));
 
-    // Fetch all issues with associated assets and employees
+    // Fetch only issues that are not returned (isReturned: false) with associated assets and employees
     const issues = await Issue.findAll({
+      where: { isReturned: false },
       include: [
         { model: Asset },
         { model: Employee }
@@ -375,25 +400,25 @@ router.get('/return', async (req, res) => {
 
 
 
-
 router.post('/return/add', async (req, res) => {
   const { assetId, employeeId, returnDate, returnReason } = req.body;
   try {
     // Add return data to Returndata table
     await Returndata.create({ assetId, employeeId, returnDate, returnReason });
-    
+
     // Update the asset status to 'Available'
     await Asset.update({ status: 'Available' }, { where: { id: assetId } });
-    
-    // Remove the issue record from the Issue table
-    await Issue.destroy({ where: { assetId: assetId, employeeId: employeeId } });
-    
+
+    // Mark the issue record as returned instead of destroying it
+    await Issue.update({ isReturned: true }, { where: { assetId: assetId, employeeId: employeeId } });
+
     res.redirect('/assets/issue?message=Asset returned successfully&type=success');
   } catch (error) {
     console.error('Error returning asset:', error);
     res.redirect('/assets/issue?message=Error returning asset&type=error');
   }
 });
+
 
 // Delete a return
 router.delete('/return/delete/:id', async (req, res) => {
@@ -432,7 +457,6 @@ router.post('/return/edit/:id', async (req, res) => {
   }
 });
 
-
 router.get('/history', async (req, res) => {
   try {
     const assets = await Asset.findAll({
@@ -441,6 +465,7 @@ router.get('/history', async (req, res) => {
         { model: Returndata },
         { model: ScrapAsset },
       ],
+      limit: 10 // Limit the number of rows to 10
     });
 
     // Log the assets with detailed structure
@@ -457,6 +482,7 @@ router.get('/history', async (req, res) => {
     res.status(500).send(error.message);
   }
 });
+
 
 // Route to get history for a specific asset
 router.get('/history/:id', async (req, res) => {
